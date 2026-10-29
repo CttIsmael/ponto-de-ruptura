@@ -1,0 +1,2 @@
+Coloque aqui o ambiente de cada ato: amb-ato1.mp3 ... amb-ato5.mp3
+60 a 90 s, loop, mono, 96 kbps, sem musica e sem voz.

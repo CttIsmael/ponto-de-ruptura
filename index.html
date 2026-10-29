@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0d0b08">
+<title>Ponto de Ruptura</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --fundo:#0d0b08; --ficha:#1c1711; --ficha2:#272015; --linha:#4a3e2d;
+  --tinta:#f4ece0; --suave:#c7baa4; --tenue:#a0947f;
+  --ambar:#e8b45a; --ambar2:#3e3018; --carimbo:#b03d2c;
+  --lh:#b2c374; --le:#9aa6b2; --ls:#d9583f; --ld:#ddd9d2;
+  --d:"Special Elite","Courier New",monospace;
+  --n:"Source Serif 4",Georgia,serif;
+  --u:Inter,system-ui,-apple-system,sans-serif;
+  --st:env(safe-area-inset-top,0px); --sb:env(safe-area-inset-bottom,0px);
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0;overflow:hidden}
+body{background:var(--fundo);color:var(--tinta);font-family:var(--u);font-size:16px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;overscroll-behavior:none}
+
+/* ============ PALCO ============ */
+#palco{position:fixed;inset:0;z-index:0;overflow:hidden;background:var(--fundo);
+  transform-origin:50% 70%;transition:transform .8s cubic-bezier(.19,.93,.24,1)}
+body[data-inspec="1"] #palco{transform:scale(1.18) translateY(-7%)}
+@media(min-width:800px){body[data-inspec="1"] #palco{transform:scale(1.14) translateY(-5%)}}
+#video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;
+  transition:opacity .9s ease-out;pointer-events:none;background:var(--fundo)}
+#video.on{opacity:1}
+/* com vídeo rodando, as camadas em CSS recuam para não somar dois efeitos */
+/* a foto nunca some: fica atrás do vídeo, então não há salto quando ele para */
+body[data-video="1"] #foto{opacity:0;animation:none}
+body[data-video="2"] #foto{animation:none}
+/* 1 = vídeo tocando: as camadas em CSS recuam para não somar dois efeitos */
+body[data-video="1"] #piscada{opacity:.25}
+body[data-video="1"] #cigarro{opacity:.1}
+body[data-video="1"] #grao{opacity:.03}
+/* 2 = pausa de 30 s no último quadro: as camadas em CSS voltam e seguram a vida da cena */
+body[data-video="2"] #piscada{opacity:1}
+body[data-video="2"] #cigarro{opacity:1}
+#foto{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;
+  transition:opacity .8s ease-out,filter .6s ease-out;
+  animation:respiraFoto 46s ease-in-out infinite alternate;will-change:transform}
+@keyframes respiraFoto{
+  0%{transform:scale(1.015) translate(0,0)}
+  50%{transform:scale(1.045) translate(-.8%,-.5%)}
+  100%{transform:scale(1.02) translate(.6%,.3%)}}
+
+/* luz da luminária piscando, irregular como filamento velho */
+#piscada{position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;
+  background:radial-gradient(42% 30% at 50% 30%,rgba(255,206,130,.17) 0%,rgba(255,206,130,0) 72%);
+  animation:pisca 7.3s linear infinite}
+@keyframes pisca{
+  0%,34%{opacity:.75}35%{opacity:.25}36%{opacity:.9}37.5%{opacity:.35}39%{opacity:.8}
+  62%{opacity:.85}63%{opacity:.3}64.5%{opacity:.88}
+  88%{opacity:.7}89%{opacity:1}90.5%{opacity:.5}92%{opacity:.82}100%{opacity:.75}}
+
+/* fumaça de cigarro subindo */
+#cigarro{position:absolute;left:58%;bottom:26%;width:120px;height:46vh;pointer-events:none;
+  opacity:.5;mix-blend-mode:screen}
+@media(max-aspect-ratio:9/10){#cigarro{left:62%;bottom:30%;height:34vh}}
+.baforada{position:absolute;bottom:0;left:50%;width:26px;height:26px;margin-left:-13px;border-radius:50%;
+  background:radial-gradient(circle,rgba(226,216,198,.5) 0%,rgba(226,216,198,0) 70%);
+  filter:blur(5px);opacity:0;animation:sobeFumo 9s ease-out infinite}
+.baforada:nth-child(2){animation-delay:3s;left:56%}
+.baforada:nth-child(3){animation-delay:6s;left:44%}
+@keyframes sobeFumo{
+  0%{opacity:0;transform:translateY(0) scale(.5)}
+  12%{opacity:.85}
+  50%{transform:translateY(-42%) scale(2.2) translateX(10px);opacity:.5}
+  100%{opacity:0;transform:translateY(-100%) scale(4.4) translateX(-14px)}}
+
+/* poeira suspensa no facho */
+.cisco{position:absolute;width:2px;height:2px;border-radius:50%;background:rgba(255,244,222,.85);
+  pointer-events:none;opacity:0;animation:flutuaCisco linear infinite}
+@keyframes flutuaCisco{
+  0%{opacity:0;transform:translate(0,0)}
+  15%{opacity:.7}70%{opacity:.4}
+  100%{opacity:0;transform:translate(var(--dx),var(--dy))}}
+
+/* grão de filme */
+#grao{position:absolute;inset:-60px;pointer-events:none;opacity:.05;
+  background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation:mexeGrao .5s steps(3) infinite}
+@keyframes mexeGrao{0%{transform:translate(0,0)}33%{transform:translate(-18px,12px)}66%{transform:translate(14px,-16px)}100%{transform:translate(0,0)}}
+
+/* clarão distante: só no Ato II, a cidade bombardeada */
+#clarao{position:absolute;inset:0;pointer-events:none;opacity:0;mix-blend-mode:screen;
+  background:radial-gradient(60% 45% at 18% 34%,rgba(255,148,74,.3) 0%,rgba(255,148,74,0) 70%)}
+body[data-ato="2"] #clarao{animation:clareia 13s ease-in-out infinite}
+@keyframes clareia{0%,76%{opacity:0}80%{opacity:.85}83%{opacity:.2}86%{opacity:.6}92%,100%{opacity:0}}
+#foto.on{opacity:1}
+.fum{position:absolute;border-radius:50%;filter:blur(44px);mix-blend-mode:screen;pointer-events:none}
+.f1{width:64vw;height:40vh;left:-14vw;bottom:4vh;background:rgba(195,172,138,.09);animation:d1 36s ease-in-out infinite alternate}
+.f2{width:50vw;height:34vh;right:-12vw;top:14vh;background:rgba(150,172,195,.075);animation:d2 48s ease-in-out infinite alternate}
+.f3{width:42vw;height:26vh;left:26vw;top:38vh;background:rgba(232,180,90,.06);animation:d3 30s ease-in-out infinite alternate}
+@keyframes d1{to{transform:translate3d(15vw,-8vh,0) scale(1.25)}}
+@keyframes d2{from{transform:scale(1.1)}to{transform:translate3d(-13vw,10vh,0) scale(.9)}}
+@keyframes d3{from{opacity:.45}to{transform:translate3d(7vw,-13vh,0) scale(1.3);opacity:1}}
+.brasa{position:absolute;width:3px;height:3px;border-radius:50%;background:var(--ambar);
+  box-shadow:0 0 7px 1px rgba(232,180,90,.5);opacity:0;animation:sobe linear infinite;pointer-events:none}
+@keyframes sobe{0%{opacity:0;transform:translateY(0)}12%{opacity:.85}70%{opacity:.5}
+  100%{opacity:0;transform:translateY(-80vh) translateX(var(--dx))}}
+#vinheta{position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(135% 95% at 50% 30%,rgba(13,11,8,0) 0%,rgba(13,11,8,.4) 50%,rgba(13,11,8,.92) 100%)}
+#veuPalco{position:absolute;inset:0;background:rgba(8,6,4,0);transition:background .35s ease-out;pointer-events:none}
+body[data-inspec="1"] #veuPalco{background:rgba(8,6,4,.52)}
+#desfoque{position:absolute;inset:-40px;pointer-events:none;opacity:0;transition:opacity .6s ease-out;
+  backdrop-filter:blur(7px) brightness(.72);-webkit-backdrop-filter:blur(7px) brightness(.72)}
+body[data-inspec="1"] #desfoque{opacity:1}
+
+/* ============ CONTORNOS SOBRE AS PASTAS DA FOTO ============ */
+#pastas{position:absolute;inset:0;pointer-events:none}
+#contornos{position:absolute;overflow:visible}
+#contornos path{fill:rgba(232,180,90,.07);stroke:rgba(240,196,110,.85);stroke-width:2;
+  vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round;
+  pointer-events:all;cursor:pointer;
+  transition:fill .3s ease-out,stroke-width .3s ease-out,stroke .3s ease-out}
+body[data-fase="mesa"] #contornos path{animation:respira 3.2s ease-in-out infinite}
+@keyframes respira{0%,100%{stroke-opacity:.45;fill-opacity:.55}50%{stroke-opacity:1;fill-opacity:1.6}}
+#contornos path:hover,#contornos path.foco{animation:none;stroke-opacity:1;stroke-width:3;
+  fill:rgba(248,206,124,.2);stroke:#ffd98a}
+#contornos path.sel{animation:none;stroke-opacity:1;stroke-width:3.5;fill:rgba(248,206,124,.26);stroke:#ffe3a6}
+#contornos path.apaga{animation:none;stroke-opacity:.5;stroke-width:2;fill:rgba(232,180,90,.05)}
+#contornos path.apaga:hover{stroke-opacity:1;fill:rgba(248,206,124,.17)}
+#contornos path:focus{outline:none}
+#contornos .brilhoPasta{fill:rgba(255,214,140,.22);filter:blur(14px);pointer-events:none;opacity:0;
+  transition:opacity .35s ease-out}
+#contornos .brilhoPasta.on{opacity:1}
+.num{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;
+  background:rgba(13,11,8,.92);border:2px solid var(--ambar);color:var(--ambar);
+  font-family:var(--d);font-size:14px;display:grid;place-items:center;pointer-events:none;
+  box-shadow:0 2px 12px rgba(0,0,0,.7);transition:transform .3s,background .3s,color .3s,opacity .3s}
+.num.sel{background:var(--ambar);color:#17120a;transform:scale(1.22)}
+.num.pula{animation:pulaNum .7s ease-in-out infinite}
+@keyframes pulaNum{0%,100%{transform:translateY(0) scale(1.08)}50%{transform:translateY(-7px) scale(1.14)}}
+.num.sel.pula{animation:none}
+.num.apaga{opacity:.72;transform:scale(.88)}
+.num.apaga:hover{opacity:1}
+
+/* ============ OBJETO FLUTUANTE (o arquivo escolhido) ============ */
+#objeto{position:fixed;inset:0;z-index:22;display:none;pointer-events:none;perspective:900px;perspective-origin:50% 32%}
+#objeto.on{display:block}
+#objVoo{position:absolute;left:50%;top:33%;width:min(34vw,168px);aspect-ratio:3/4;
+  margin:0 0 0 calc(min(34vw,168px) / -2);transform-origin:50% 50%;transform-style:preserve-3d;
+  transform:translate(0,-50%) scale(.2);opacity:0;
+  transition:transform .6s cubic-bezier(.18,.9,.3,1.12),opacity .3s ease-out}
+@media(min-width:800px){#objVoo{width:min(22vw,240px);margin-left:calc(min(22vw,240px) / -2);top:34%}}
+#objVoo.pousou{opacity:1}
+#objTilt{width:100%;height:100%;transform-style:preserve-3d;will-change:transform}
+/* NADA de filter/opacity/mask aqui dentro: qualquer um deles achata o preserve-3d */
+#objFlut{position:relative;width:100%;height:100%;transform-style:preserve-3d;
+  animation:flutua 4.2s ease-in-out infinite}
+@keyframes flutua{0%,100%{transform:translateY(-6px)}50%{transform:translateY(10px)}}
+
+/* miolo: silhuetas do próprio PNG recuadas no eixo Z — a rotação revela a lateral sozinha */
+#vol{position:absolute;inset:0;transform-style:preserve-3d;pointer-events:none}
+#vol i{position:absolute;inset:0;display:block;
+  -webkit-mask-image:var(--mk);mask-image:var(--mk);
+  -webkit-mask-size:contain;mask-size:contain;
+  -webkit-mask-position:center;mask-position:center;
+  -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
+  transform:translateZ(calc(var(--k) * -3.2px))}
+#objFoto{position:absolute;inset:0;transform:translateZ(.6px)}
+#objFoto img{width:100%;height:100%;display:block;object-fit:contain;
+  -webkit-user-drag:none;user-select:none;pointer-events:none}
+/* o lustro usa a mesma máscara: a luz não escapa do recorte do papel */
+#lustro{position:absolute;inset:0;pointer-events:none;transform:translateZ(1.2px);
+  mix-blend-mode:soft-light;opacity:.42;
+  -webkit-mask-image:var(--mk);mask-image:var(--mk);
+  -webkit-mask-size:contain;mask-size:contain;
+  -webkit-mask-position:center;mask-position:center;
+  -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
+  background:radial-gradient(62% 52% at var(--lx,50%) var(--ly,28%),rgba(255,248,230,.8) 0%,rgba(255,248,230,0) 78%)}
+/* sombra: gradiente, não filter, para não achatar o 3D */
+#sombra{position:absolute;left:-6%;right:-6%;bottom:-10%;height:26%;transform:translateZ(-44px);
+  background:radial-gradient(50% 50% at 50% 50%,rgba(0,0,0,.8) 0%,rgba(0,0,0,.42) 42%,rgba(0,0,0,0) 74%)}
+
+
+/* ============ HUD ============ */
+#hud{position:fixed;top:0;left:0;right:0;z-index:20;padding:calc(var(--st) + 8px) 12px 10px;
+  background:linear-gradient(rgba(13,11,8,.96),rgba(13,11,8,.82),rgba(13,11,8,0));display:none}
+body[data-fase="mesa"] #hud,body[data-fase="brief"] #hud{display:block}
+.hud__l{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+.hud__ato{font-family:var(--d);font-size:12px;letter-spacing:1.4px;color:var(--suave)}
+.hud__int{font-size:11.5px;font-weight:600;letter-spacing:.8px;color:var(--tenue)}
+.trilho{height:5px;border-radius:99px;background:var(--ambar2);overflow:hidden;display:flex}
+.trilho>i{height:100%;transition:width .55s ease-out}
+.sh{background:var(--lh)}.se{background:var(--le)}.ss{background:var(--ls)}
+
+/* ============ TIPOGRAFIA ============ */
+.rot{font-size:11.5px;line-height:15px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--suave)}
+.meta{font-size:13.5px;line-height:19px;color:var(--tenue)}
+.tit{font-family:var(--d);font-size:25px;line-height:29px;margin:0 0 10px}
+.cena{font-family:var(--n);font-size:17.5px;line-height:1.6;margin:0 0 12px}
+.cena b{font-weight:600}
+.centro{text-align:center}
+@media(min-width:800px){ .tit{font-size:30px;line-height:34px} .cena{font-size:18.5px} }
+
+/* ============ FOLHAS (telas roláveis) ============ */
+.folha{position:fixed;inset:0;z-index:15;overflow-y:auto;-webkit-overflow-scrolling:touch;display:none;
+  padding:calc(var(--st) + 18px) 16px calc(var(--sb) + 28px);background:rgba(8,6,4,.72);
+  backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);animation:fade .4s ease-out}
+.folha.on{display:block}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.col{max-width:620px;margin:0 auto}
+.painel{background:rgba(28,23,17,.93);border:1px solid var(--linha);border-radius:14px;padding:20px;
+  box-shadow:0 10px 40px rgba(0,0,0,.6)}
+@media(min-width:800px){.painel{padding:26px}}
+
+/* ============ BOTÕES ============ */
+.btn{display:block;width:100%;min-height:54px;padding:14px 18px;border-radius:10px;cursor:pointer;
+  font-family:var(--u);font-size:16px;font-weight:600;border:1px solid var(--ambar);
+  background:var(--ambar);color:#17120a;margin-top:18px}
+.btn--g{background:rgba(28,23,17,.9);color:var(--tinta);border-color:var(--linha);margin-top:10px}
+.btn:focus-visible{outline:3px solid var(--ambar);outline-offset:3px}
+.btn:active{transform:scale(.985)}
+
+/* ============ GAVETA DE INSPEÇÃO ============ */
+#gaveta,#gavIns{position:fixed;left:0;right:0;bottom:0;z-index:25;transform:translateY(112%);
+  transition:transform .42s cubic-bezier(.2,.9,.3,1.05),opacity .25s;
+  background:linear-gradient(rgba(28,23,17,.97),rgba(20,16,11,.99));
+  border-top:1px solid var(--linha);border-radius:20px 20px 0 0;
+  padding:10px 16px calc(var(--sb) + 12px);box-shadow:0 -14px 44px rgba(0,0,0,.72)}
+#gaveta.on,#gavIns.on{transform:translateY(0)}
+#gaveta .dentro,#gavIns .dentro{max-width:600px;margin:0 auto}
+.puxador{width:38px;height:4px;border-radius:99px;background:var(--linha);margin:0 auto 10px}
+.gav__cod{font-family:var(--d);font-size:11.5px;letter-spacing:1.5px;color:var(--ambar);display:block;margin-bottom:5px}
+.gav__rot{font-family:var(--n);font-size:17.5px;line-height:1.38;margin:0}
+@media(min-width:800px){.gav__rot{font-size:21px}}
+#gavTrocar{display:flex;gap:7px;margin:10px 0 0}
+#gavTrocar button{flex:0 0 auto;min-width:42px;height:38px;border-radius:10px;cursor:pointer;
+  font-family:var(--d);font-size:15px;border:1px solid var(--linha);
+  background:rgba(39,32,21,.9);color:var(--suave)}
+#gavTrocar button[aria-current="true"]{background:var(--ambar);color:#17120a;border-color:var(--ambar)}
+#gavTrocar button:focus-visible{outline:2px solid var(--ambar);outline-offset:2px}
+#gavTrocar span{align-self:center;font-size:12px;color:var(--tenue);margin-left:4px}
+.gav__bts{display:flex;flex-direction:row-reverse;gap:9px;margin-top:12px}
+.gav__bts .btn{margin-top:0;min-height:50px;font-size:15px}
+.gav__bts .btn--g{flex:0 0 38%}
+#gavDica{display:none}
+@media(min-width:800px){#gavDica{display:block;margin:10px 0 0}}
+
+/* ============ DICA DA MESA ============ */
+#dica{position:fixed;left:0;right:0;z-index:18;bottom:calc(var(--sb) + 14px);text-align:center;
+  pointer-events:none;display:none;padding:0 16px}
+body[data-fase="mesa"] #dica{display:block}
+body[data-inspec="1"] #dica{display:none}
+#dica span{display:inline-block;background:rgba(13,11,8,.88);border:1px solid var(--linha);
+  border-radius:99px;padding:9px 16px;font-size:13.5px;color:var(--suave);animation:pisca 3s ease-in-out infinite}
+@keyframes pisca{0%,100%{opacity:.6}50%{opacity:1}}
+#pergunta{position:fixed;left:0;right:0;z-index:19;top:calc(var(--st) + 56px);padding:0 16px;display:none;
+  transition:transform .3s ease-out}
+body[data-lendo="1"] #pergunta{z-index:32}
+body[data-lendo="1"] #objeto{opacity:0;transition:opacity .25s}
+body[data-lendo="1"] #gaveta{transform:translateY(112%)}
+body[data-inspec="1"]:not([data-lendo="1"]) #perguntaTxt{
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+body[data-fase="mesa"] #pergunta{display:block}
+body[data-inspec="1"] #pergunta{opacity:1}
+#pergCard{max-width:600px;margin:0 auto;background:rgba(10,8,5,.86);border:1px solid rgba(90,74,52,.9);
+  border-radius:14px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  box-shadow:0 6px 26px rgba(0,0,0,.65);overflow:hidden;transition:border-color .25s}
+#pergCard.aberto{border-color:var(--ambar);max-height:calc(100vh - var(--st) - 120px);overflow-y:auto;-webkit-overflow-scrolling:touch}
+#perguntaBt{display:block;width:100%;border:0;background:transparent;padding:12px 14px;cursor:pointer;
+  font:inherit;color:inherit;text-align:center}
+#perguntaBt:focus-visible{outline:2px solid var(--ambar);outline-offset:-3px;border-radius:14px}
+#perguntaBt em{display:inline-flex;align-items:center;gap:7px;font-style:normal;font-family:var(--u);
+  font-size:12.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  color:#17120a;background:var(--ambar);border-radius:99px;padding:7px 15px;margin-top:11px;
+  box-shadow:0 2px 12px rgba(232,180,90,.35)}
+#perguntaBt em b{font-size:11px;line-height:1;animation:acena 2.2s ease-in-out infinite}
+@keyframes acena{0%,100%{transform:translateY(0)}50%{transform:translateY(2px)}}
+#pergCard.aberto #perguntaBt em{background:transparent;color:var(--ambar);box-shadow:none;border:1px solid var(--ambar)}
+#pergFull{padding:0 16px 16px;text-align:left;border-top:1px solid rgba(90,74,52,.7);margin-top:4px}
+#pergFull .rot{margin:14px 0 6px}
+#pergTit{font-family:var(--d);font-size:21px;line-height:25px;margin:0 0 10px;font-weight:400}
+#pergFull .cena{font-size:16.5px}
+#dica{position:fixed;left:0;right:0;z-index:18;bottom:calc(var(--sb) + 14px);text-align:center;
+  pointer-events:none;display:none;padding:0 16px}
+body[data-fase="mesa"] #dica{display:block}
+body[data-inspec="1"] #dica{display:none}
+#dica span{display:inline-block;background:rgba(13,11,8,.88);border:1px solid var(--linha);
+  border-radius:99px;padding:9px 16px;font-size:13.5px;color:var(--suave);animation:pisca 3s ease-in-out infinite}
+@keyframes pisca{0%,100%{opacity:.6}50%{opacity:1}}
+#pergunta{position:fixed;left:0;right:0;z-index:19;top:calc(var(--st) + 56px);padding:0 16px;display:none;
+  transition:transform .3s ease-out}
+body[data-lendo="1"] #pergunta{z-index:32}
+body[data-lendo="1"] #objeto{opacity:0;transition:opacity .25s}
+body[data-lendo="1"] #gaveta{transform:translateY(112%)}
+body[data-inspec="1"]:not([data-lendo="1"]) #perguntaTxt{
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+body[data-fase="mesa"] #pergunta{display:block}
+body[data-inspec="1"] #pergunta{opacity:1}
+#perguntaTxt{display:block;font-family:var(--n);font-size:16px;line-height:1.42;color:var(--tinta)}
+@media(min-width:800px){#perguntaTxt{font-size:17.5px}}
+
+/* ============ CARIMBO ============ */
+#veu{position:fixed;inset:0;z-index:40;background:rgba(6,5,3,.9);display:none;
+  align-items:center;justify-content:center;padding:24px}
+#veu.on{display:flex;animation:fade .22s}
+#veu .in{max-width:420px;text-align:center}
+#carimbo{display:inline-block;font-family:var(--d);font-size:20px;letter-spacing:3px;
+  padding:9px 22px;border:3px solid var(--carimbo);border-radius:4px;color:var(--carimbo);opacity:0;margin-bottom:22px}
+#carimbo.ok{border-color:var(--lh);color:var(--lh)}
+#carimbo.bate{animation:bate .5s cubic-bezier(.2,.9,.3,1.25) forwards}
+@keyframes bate{0%{opacity:0;transform:rotate(-17deg) scale(2.1)}55%{opacity:1;transform:rotate(-3deg) scale(.92)}100%{opacity:1;transform:rotate(-3deg) scale(1)}}
+#seloFrase{font-family:var(--n);font-size:18px;line-height:1.55;margin:0}
+
+/* ============ CONQUISTA ============ */
+#conq{position:fixed;left:50%;top:calc(var(--st) + 8px);transform:translate(-50%,-170%);z-index:60;
+  background:rgba(39,32,21,.97);border:1px solid var(--ambar);border-radius:10px;padding:11px 15px;
+  display:flex;gap:11px;align-items:center;max-width:92vw;box-shadow:0 10px 30px rgba(0,0,0,.65);
+  transition:transform .5s cubic-bezier(.2,.9,.3,1.1)}
+#conq.on{transform:translate(-50%,0)}
+#conq b{display:block;font-size:14.5px}
+#conqArte{flex:0 0 auto;width:36px;height:48px;display:block}
+#conqArte img{width:100%;height:100%;object-fit:contain;display:block}
+
+/* ============ FERRAMENTAS ============ */
+#ferr{position:fixed;right:10px;top:calc(var(--st) + 8px);z-index:55;display:flex;gap:7px}
+.ic{width:40px;height:40px;border-radius:99px;border:1px solid var(--linha);background:rgba(20,16,11,.92);
+  color:var(--suave);cursor:pointer;font-size:15px;display:grid;place-items:center}
+.ic[aria-pressed="true"]{color:var(--ambar);border-color:var(--ambar)}
+.ic:focus-visible{outline:2px solid var(--ambar);outline-offset:2px}
+body[data-fase="mesa"] #ferr{top:auto;bottom:calc(var(--sb) + 10px);right:10px}
+#ferr{transition:opacity .25s}
+body[data-inspec="1"] #ferr,body[data-lendo="1"] #ferr{opacity:0;pointer-events:none}
+
+/* ============ FINAL / PLACAR ============ */
+#galeria{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(min-width:620px){#galeria{grid-template-columns:repeat(4,1fr)}}
+.ins{background:rgba(39,32,21,.7);border:1px solid var(--linha);border-radius:12px;padding:10px 6px 8px;
+  cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;
+  transition:transform .18s,border-color .18s,background .18s}
+.ins img{width:100%;max-width:62px;aspect-ratio:3/4;object-fit:contain;display:block}
+.ins em{font-style:normal;font-size:10.5px;line-height:13px;text-align:center;color:var(--suave);
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ins:hover{transform:translateY(-3px);border-color:var(--ambar);background:rgba(58,48,28,.8)}
+.ins:focus-visible{outline:2px solid var(--ambar);outline-offset:2px}
+.ins.travada{opacity:1}
+.ins.travada img{filter:grayscale(1) brightness(.38) contrast(1.1)}
+.ins.travada em{color:var(--tenue)}
+.placar{display:flex;gap:10px;margin:20px 0;flex-wrap:wrap}
+.placar>div{flex:1 1 90px;background:rgba(39,32,21,.8);border:1px solid var(--linha);border-radius:10px;padding:11px;text-align:center}
+.placar b{display:block;font-family:var(--d);font-size:24px;line-height:1.15;margin-top:3px}
+.lista{list-style:none;margin:12px 0 0;padding:0}
+.lista li{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--linha);font-size:14.5px}
+.lista li:last-child{border-bottom:none}
+.pct{font-family:var(--d);font-size:58px;line-height:1;margin:10px 0}
+.marca{font-family:var(--d);font-size:40px;line-height:1;margin:0 0 10px}
+@media(min-width:800px){.marca{font-size:58px}.pct{font-size:72px}}
+.faixa{display:inline-block;font-family:var(--d);font-size:14px;letter-spacing:3px;padding:6px 14px;
+  border:2px solid currentColor;border-radius:4px;transform:rotate(-2deg);margin-bottom:14px}
+.aviso{background:rgba(62,48,24,.55);border:1px solid var(--linha);border-radius:10px;padding:11px 14px;
+  margin-bottom:14px;font-size:14.5px;color:var(--suave)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body data-fase="abertura">
+
+<div id="palco">
+  <video id="video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true"></video>
+  <div id="foto"></div>
+  <div id="piscada"></div>
+  <div id="clarao"></div>
+  <div class="fum f1"></div><div class="fum f2"></div><div class="fum f3"></div>
+  <div id="cigarro"><span class="baforada"></span><span class="baforada"></span><span class="baforada"></span></div>
+  <div id="brasas"></div>
+  <div id="poeira"></div>
+  <div id="grao"></div>
+  <div id="desfoque"></div>
+  <div id="veuPalco"></div>
+  <div id="vinheta"></div>
+  <div id="pastas">
+    <svg id="contornos" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true"></svg>
+    <div id="numeros"></div>
+  </div>
+</div>
+
+<div id="objeto"><div id="objVoo"><div id="objTilt"><div id="objFlut"></div></div></div></div>
+
+<div id="hud">
+  <div class="hud__l"><span class="hud__ato" id="hudAto"></span><span class="hud__int" id="hudInt"></span></div>
+  <div class="trilho" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-label="Integridade do acervo" id="trilho">
+    <i class="sh" id="sH" style="width:100%"></i><i class="se" id="sE" style="width:0"></i><i class="ss" id="sS" style="width:0"></i>
+  </div>
+</div>
+
+<div id="pergunta"><div id="pergCard">
+  <button type="button" id="perguntaBt" aria-expanded="false" aria-controls="pergFull">
+    <span id="perguntaTxt"></span>
+    <em id="pergDica"><b aria-hidden="true">&#9662;</b> Ler o contexto</em>
+  </button>
+  <div id="pergFull" hidden>
+    <p class="rot" id="pergData"></p>
+    <h3 id="pergTit"></h3>
+    <div id="pergTxt"></div>
+    <button class="btn btn--g" id="btFecharPerg" style="margin-top:14px">Fechar e voltar à mesa</button>
+  </div>
+</div></div>
+<div id="dica"><span id="dicaTxt">Toque em um arquivo para examinar</span></div>
+
+<div id="ferr">
+  <button class="ic" id="btSom" aria-pressed="true" aria-label="Ligar ou desligar o som">&#9834;</button>
+  <button class="ic" id="btMov" aria-pressed="true" aria-label="Ligar ou desligar o fundo animado" hidden>&#9655;</button>
+  <button class="ic" id="btNarra" aria-pressed="false" aria-label="Ligar ou desligar a narração">&#128266;</button>
+  <button class="ic" id="btBrief" aria-label="Reler o contexto desta decisão">&#8505;</button>
+</div>
+
+<div id="conq" role="status" aria-live="polite">
+  <span id="conqArte" aria-hidden="true"></span>
+  <span><span class="rot" style="font-size:10.5px">Insígnia desbloqueada</span><b id="conqNome"></b></span>
+</div>
+
+<div id="veu" role="dialog" aria-modal="true" aria-labelledby="seloFrase">
+  <div class="in"><div id="carimbo"></div><p id="seloFrase"></p>
+    <button class="btn" id="btSelo">Ler o documento verdadeiro</button></div>
+</div>
+
+<div id="gaveta" role="dialog" aria-modal="false" aria-labelledby="gavRot">
+  <div class="dentro">
+    <div class="puxador"></div>
+    <span class="gav__cod" id="gavCod"></span>
+    <p class="gav__rot" id="gavRot"></p>
+    <div id="gavTrocar" role="group" aria-label="Trocar de arquivo"></div>
+    <p class="meta" id="gavDica">Compare com os outros antes de decidir. A escolha só vale ao confirmar.</p>
+    <div class="gav__bts">
+      <button class="btn" id="btEscolher">Escolher este arquivo</button>
+      <button class="btn btn--g" id="btVoltar">Ver as outras</button>
+    </div>
+  </div>
+</div>
+
+<div id="gavIns" role="dialog" aria-modal="false" aria-labelledby="insNome">
+  <div class="dentro">
+    <div class="puxador"></div>
+    <p class="gav__rot" id="insNome" style="font-family:var(--d);font-size:22px"></p>
+    <p class="meta" id="insDesc" style="font-size:15px;line-height:21px;color:var(--suave)"></p>
+    <button class="btn" id="btInsFechar" style="margin-top:16px">Voltar à galeria</button>
+  </div>
+</div>
+
+<!-- ABERTURA -->
+<div class="folha on" id="fAbertura"><div class="col" style="padding-top:18px">
+  <div class="centro">
+    <p class="rot" style="color:var(--carimbo)">Acervo do século XX &middot; estado: adulterado</p>
+    <h1 class="marca">Ponto de<br>Ruptura</h1>
+    <p class="cena" style="color:var(--suave)">Cada escolha abre um século diferente.</p>
+  </div>
+  <div class="painel" style="margin-top:22px">
+    <p class="cena">Você é o último Arquivista. O acervo foi adulterado: para cada momento decisivo existem três arquivos com versões diferentes do mesmo documento sobre a mesa, e só uma é autêntica.</p>
+    <p class="cena">Examine os arquivos, compare e valide. O que você validar vira história oficial — a verdadeira ou a falsificada.</p>
+    <p class="cena" style="font-weight:600;margin-bottom:0">Quinze decisões. Um único final em que o século é reconstruído.</p>
+    <button class="btn" id="btComecar">Entrar no arquivo</button>
+  </div>
+  <p class="meta centro" style="margin-top:18px">5 atos &middot; cerca de 20 minutos &middot; fones recomendados</p>
+</div></div>
+
+<!-- BRIEFING -->
+<div class="folha" id="fBrief"><div class="col" style="padding-top:60px">
+  <div class="painel">
+    <div id="briefAviso"></div>
+    <p class="rot" id="briefData"></p>
+    <h2 class="tit" id="briefTit"></h2>
+    <div id="briefTxt"></div>
+    <p class="cena" style="font-weight:600;margin-bottom:0" id="briefPerg"></p>
+    <button class="btn" id="btVerMesa">Ir para a mesa</button>
+  </div>
+</div></div>
+
+<!-- CARD DO ARQUIVO -->
+<div class="folha" id="fCard"><div class="col" style="padding-top:12px">
+  <p class="rot centro" style="margin-bottom:10px">O que realmente aconteceu</p>
+  <div class="painel">
+    <h2 class="tit" id="cTit"></h2>
+    <p class="cena" id="cCorpo"></p>
+    <p class="meta" id="cCur"></p>
+    <div id="cMudou"></div>
+    <p class="meta" id="cFonte" style="border-top:1px solid var(--linha);padding-top:12px;margin:16px 0 0"></p>
+  </div>
+  <button class="btn" id="btCard">Continuar</button>
+</div></div>
+
+<!-- FIM DE ATO -->
+<div class="folha" id="fAto"><div class="col" style="padding-top:40px">
+  <div class="centro"><p class="rot" id="aSelo"></p><h2 class="tit" id="aTit" style="font-size:30px"></h2></div>
+  <div class="painel" style="margin-top:16px">
+    <p class="cena" id="aTxt"></p><p class="meta" id="aPlacar"></p>
+    <button class="btn" id="btAto"></button>
+  </div>
+</div></div>
+
+<!-- FINAL -->
+<div class="folha" id="fFinal"><div class="col" style="padding-top:20px">
+  <div class="centro">
+    <span class="faixa" id="xFaixa"></span>
+    <h2 class="marca" id="xTit" style="font-size:34px"></h2>
+    <p class="rot">Documentos autênticos validados</p>
+    <div class="pct" id="xPct">0%</div>
+  </div>
+  <div class="painel">
+    <p class="cena" id="xT1"></p>
+    <p class="cena" id="xT2" style="color:var(--suave)"></p>
+    <div class="placar">
+      <div><span class="rot">Autênticos</span><b id="xA" style="color:var(--lh)"></b></div>
+      <div><span class="rot">Falsif. Eixo</span><b id="xE" style="color:var(--le)"></b></div>
+      <div><span class="rot">Falsif. URSS</span><b id="xS" style="color:var(--ls)"></b></div>
+    </div>
+    <p class="rot" style="margin-top:20px">Desempenho por ato</p>
+    <ul class="lista" id="xAtos"></ul>
+    <p class="rot" style="margin-top:20px">Insígnias <span id="xConqN" style="color:var(--ambar)"></span></p>
+    <p class="meta" style="margin:4px 0 12px">Toque em uma insígnia para examinar.</p>
+    <div id="galeria"></div>
+  </div>
+  <div class="painel" style="margin-top:14px;background:rgba(39,32,21,.8)">
+    <p class="meta" id="xNota" style="margin:0"></p>
+  </div>
+  <button class="btn" id="btRe">Recomeçar o arquivo</button>
+</div></div>
+
+<script>
+var ATOS = [
+ {n:"I",  nome:"Prelúdio",        periodo:"1938 – 1940", grade:"sepia(.18) saturate(1.05)",            fim:"Junho de 1940. A França caiu. O Reino Unido resiste sozinho do outro lado do Canal."},
+ {n:"II", nome:"Guerra global",   periodo:"1940 – 1941", grade:"sepia(.10) saturate(1.1) hue-rotate(-6deg)", fim:"Dezembro de 1941. A guerra virou mundial. O Eixo está no auge e, pela primeira vez, cercado."},
+ {n:"III",nome:"A virada",        periodo:"1942 – 1944", grade:"saturate(.9) contrast(1.08) hue-rotate(4deg)", fim:"Agosto de 1944. Paris está livre e o Exército Vermelho avança. A pergunta já não é quem vence."},
+ {n:"IV", nome:"O desfecho",      periodo:"1943 – 1945", grade:"saturate(.75) contrast(1.12) brightness(.94)", fim:"1945. A guerra acabou. Entre os vencedores, a desconfiança já começou."},
+ {n:"V",  nome:"O mundo depois",  periodo:"1947 – 1991", grade:"saturate(.6) contrast(1.15) brightness(.9) hue-rotate(-10deg)", fim:"1991. O século chega ao fim. O que o acervo guarda agora é o que as próximas gerações vão chamar de história."}
+];
+
+var DECISOES = [
+/* ---------------- ATO I ---------------- */
+{ato:0, data:"29 de setembro de 1938 · Munique, Alemanha", titulo:"Conferência de Munique",
+ texto:["Hitler exige os Sudetos, faixa da Tchecoslováquia onde vivem cerca de 3 milhões de pessoas de língua alemã. Se não for atendido, ameaça invadir.",
+        "À mesa estão Chamberlain, Daladier e Mussolini. O governo tcheco não foi convidado. Em Moscou, Stalin tem um tratado de defesa com os tchecos, mas só age se a França agir primeiro."],
+ pergunta:"Qual das três pastas registra o que realmente aconteceu nesta noite?",
+ pastas:[
+  {cod:"MUN-A · 14 fls.", rot:"Reino Unido e França cedem os Sudetos à Alemanha", tipo:"h", frase:"O papel confere. Chamberlain volta a Londres prometendo paz — e ela vai durar onze meses."},
+  {cod:"MUN-B · 09 fls.", rot:"A Tchecoslováquia inteira é entregue sem resistência", tipo:"e", frase:"A falsificação entra no acervo. Sem disparar um tiro, as fábricas de armas tchecas mudam de dono."},
+  {cod:"MUN-C · 21 fls.", rot:"Londres e Paris se aliam à URSS para defender os tchecos", tipo:"s", frase:"A falsificação entra no acervo. Pela primeira vez Moscou senta à mesa como aliada do Ocidente."}],
+ card:{titulo:"Acordo de Munique",
+  corpo:"Assinado na madrugada de 30 de setembro de 1938, obrigou a Tchecoslováquia a entregar os Sudetos. Chamberlain voltou dizendo ter garantido a paz. Em março de 1939 a Alemanha ocupou o restante da Boêmia e da Morávia. Desde então, apaziguamento virou sinônimo de ceder diante de um agressor.",
+  cur:"A URSS também não foi convidada. Stalin passou a desconfiar de Londres e Paris, e isso pesou na decisão seguinte.",
+  fonte:"Fontes: Imperial War Museums; Encyclopaedia Britannica."}},
+
+{ato:0, data:"Agosto de 1939 · Moscou, URSS", titulo:"Pacto Molotov-Ribbentrop",
+ texto:["A Europa sabe que a guerra está perto. Hitler quer a Polônia, mas teme lutar em duas frentes.",
+        "Uma missão militar britânica e francesa chegou a Moscou sem pressa e sem poderes para fechar acordo. Ao mesmo tempo, Ribbentrop oferece a Stalin um pacto de não agressão e uma divisão secreta do Leste Europeu."],
+ pergunta:"Para que lado a URSS se voltou?",
+ pastas:[
+  {cod:"MOS-A · 17 fls.", rot:"A URSS fecha aliança militar com Reino Unido e França", tipo:"s", frase:"A falsificação entra no acervo. A Alemanha fica cercada antes mesmo de atacar a Polônia."},
+  {cod:"MOS-B · 11 fls.", rot:"URSS e Alemanha assinam um pacto de não agressão", tipo:"h", frase:"O papel confere. Uma semana depois, a Alemanha invade a Polônia. Começa a Segunda Guerra Mundial."},
+  {cod:"MOS-C · 08 fls.", rot:"A URSS entra formalmente no pacto do Eixo", tipo:"e", frase:"A falsificação entra no acervo. Com petróleo e cereais soviéticos garantidos, o Reich não teme mais bloqueio algum."}],
+ card:{titulo:"Pacto Molotov-Ribbentrop",
+  corpo:"Assinado em 23 de agosto de 1939. Um protocolo secreto dividia o Leste Europeu entre os dois países. A Alemanha invadiu a Polônia em 1º de setembro; Reino Unido e França declararam guerra no dia 3; a URSS invadiu o leste polonês em 17 de setembro.",
+  cur:"A URSS negou a existência do protocolo secreto até 1989. Em novembro de 1940, Molotov chegou a ir a Berlim discutir a entrada soviética no Eixo — e Hitler nunca respondeu às exigências de Stalin.",
+  fonte:"Fontes: United States Holocaust Memorial Museum; Encyclopaedia Britannica."}},
+
+{ato:0, data:"24 de maio de 1940 · Dunquerque, França", titulo:"O cerco de Dunquerque",
+ texto:["Em duas semanas os blindados alemães atravessaram as Ardenas e partiram os exércitos aliados ao meio. Cerca de 400 mil soldados britânicos e franceses estão encurralados na praia, de costas para o mar.",
+        "Em Londres, Churchill enfrenta pressão dentro do próprio governo: Lord Halifax sugere sondar um acordo de paz com Berlim, usando Mussolini como intermediário."],
+ pergunta:"O que os arquivos registram sobre aquela manhã?",
+ pastas:[
+  {cod:"DUN-A · 06 fls.", rot:"Os blindados avançam e o exército britânico é capturado", tipo:"e", frase:"A falsificação entra no acervo. Sem seu exército, Londres aceita negociar e sai da guerra."},
+  {cod:"DUN-B · 19 fls.", rot:"Os blindados param e os soldados são resgatados pelo mar", tipo:"h", frase:"O papel confere. Navios de guerra e centenas de barcos civis atravessam o Canal. O Reino Unido continua na luta."},
+  {cod:"DUN-C · 13 fls.", rot:"Churchill cai e Halifax assume as negociações de paz", tipo:"e", frase:"A falsificação entra no acervo. O gabinete britânico escolhe a mesa em vez da praia."}],
+ card:{titulo:"Operação Dínamo",
+  corpo:"Em 24 de maio de 1940, comandantes alemães pararam os blindados para reagrupar e deixar a força aérea terminar o trabalho. Entre 26 de maio e 4 de junho, cerca de 338 mil soldados foram evacuados, com ajuda de centenas de barcos civis. Entre 25 e 28 de maio o gabinete britânico debateu a proposta de Halifax, e Churchill venceu.",
+  cur:"Quase todo o equipamento pesado ficou na praia. Em 4 de junho, Churchill fez o discurso em que prometeu lutar nas praias.",
+  fonte:"Fontes: Imperial War Museums; National Army Museum."}},
+
+/* ---------------- ATO II ---------------- */
+{ato:1, data:"Agosto de 1940 · Céu do sul da Inglaterra", titulo:"Batalha da Inglaterra",
+ texto:["Para invadir a ilha, a Alemanha precisa antes dominar o céu. A Luftwaffe ataca dia e noite os aeródromos da RAF, e os pilotos britânicos estão no limite.",
+        "Em 25 de agosto, bombardeiros britânicos atingem Berlim. Hitler promete vingança."],
+ pergunta:"O que a Luftwaffe fez a seguir?",
+ pastas:[
+  {cod:"LON-A · 12 fls.", rot:"A Luftwaffe destrói a RAF e a invasão da ilha é lançada", tipo:"e", frase:"A falsificação entra no acervo. Sem defesa aérea, o sul da Inglaterra fica exposto."},
+  {cod:"LON-B · 23 fls.", rot:"A Luftwaffe troca os aeródromos por Londres e a RAF se recupera", tipo:"h", frase:"O papel confere. Londres arde por meses, mas a RAF volta a voar e a invasão é adiada para sempre."},
+  {cod:"LON-C · 07 fls.", rot:"Stalin abre uma frente no leste e a Luftwaffe é desviada", tipo:"s", frase:"A falsificação entra no acervo. A pressão sai do Canal e vai para a Polônia."}],
+ card:{titulo:"Batalha da Inglaterra",
+  corpo:"Durou de julho a outubro de 1940. Em agosto, os ataques aos aeródromos levaram a RAF ao limite. Em 7 de setembro a Luftwaffe passou a atacar Londres, em parte como retaliação ao bombardeio de Berlim. Começava a Blitz, que mataria mais de 40 mil civis britânicos até maio de 1941. A pausa deu fôlego à RAF, e em 17 de setembro Hitler adiou a invasão indefinidamente.",
+  cur:"Uma rede de radares na costa, a Chain Home, avisava a RAF da chegada dos aviões alemães.",
+  fonte:"Fontes: Imperial War Museums; RAF Museum."}},
+
+{ato:1, data:"Junho de 1941 · Fronteira germano-soviética", titulo:"Operação Barbarossa",
+ texto:["Mais de 3 milhões de soldados alemães se concentram na fronteira com a URSS. Em Tóquio, o espião soviético Richard Sorge avisa Moscou da data do ataque. Os britânicos mandam alertas parecidos.",
+        "Stalin não acredita. Acha que é provocação para arrastar a URSS à guerra. Trens soviéticos continuam levando grãos e petróleo para a Alemanha."],
+ pergunta:"O que aconteceu na fronteira em 22 de junho?",
+ pastas:[
+  {cod:"BAR-A · 31 fls.", rot:"A Alemanha invade a URSS de surpresa", tipo:"h", frase:"O papel confere. Em seis meses os alemães chegam aos arredores de Moscou. O inverno e o Exército Vermelho os detêm."},
+  {cod:"BAR-B · 15 fls.", rot:"A Alemanha evita o leste e avança sobre o Oriente Médio", tipo:"e", frase:"A falsificação entra no acervo. O Reich garante seu petróleo e nunca abre a frente que o destruiria."},
+  {cod:"BAR-C · 18 fls.", rot:"Stalin acredita nos alertas e mobiliza antes do ataque", tipo:"s", frase:"A falsificação entra no acervo. A invasão bate num muro de tropas prontas e perde força em semanas."}],
+ card:{titulo:"Operação Barbarossa",
+  corpo:"Em 22 de junho de 1941, cerca de 3 milhões de soldados alemães e de países aliados invadiram a URSS, na maior invasão terrestre da história. Stalin tinha recebido vários alertas e ignorado todos. Com a invasão começaram também os fuzilamentos em massa de judeus pelos Einsatzgruppen, uma das etapas iniciais do Holocausto.",
+  cur:"A URSS perdeu cerca de 27 milhões de pessoas na guerra, mais do que qualquer outro país.",
+  fonte:"Fontes: United States Holocaust Memorial Museum; Imperial War Museums."}},
+
+{ato:1, data:"Dezembro de 1941 · Tóquio, Japão", titulo:"Pearl Harbor",
+ texto:["Desde agosto os EUA cortaram a venda de petróleo ao Japão, que guerreia na China há quatro anos. Sem combustível, a máquina militar japonesa para em poucos meses.",
+        "Em Tóquio discute-se o ataque ao norte, contra a Sibéria soviética, ou o ataque ao sul, rumo ao petróleo das colônias holandesas. Uma frota navega em silêncio rumo ao Havaí."],
+ pergunta:"O que aconteceu em 7 de dezembro?",
+ pastas:[
+  {cod:"PAC-A · 10 fls.", rot:"O Japão ataca a Sibéria soviética e poupa os EUA", tipo:"e", frase:"A falsificação entra no acervo. Sem um ataque direto, o Congresso americano não aprova a guerra."},
+  {cod:"PAC-B · 14 fls.", rot:"Hitler não declara guerra aos EUA, que ficam só no Pacífico", tipo:"s", frase:"A falsificação entra no acervo. Na Europa, quem decide a guerra passa a ser Moscou."},
+  {cod:"PAC-C · 27 fls.", rot:"O Japão ataca Pearl Harbor e Hitler declara guerra aos EUA", tipo:"h", frase:"O papel confere. Em quatro dias os EUA estão em guerra contra o Eixo inteiro. O gigante industrial acordou."}],
+ card:{titulo:"Pearl Harbor",
+  corpo:"Em 7 de dezembro de 1941 aviões japoneses atacaram a base no Havaí. Mais de 2.400 americanos morreram e boa parte dos encouraçados foi atingida, mas os porta-aviões estavam fora do porto. No dia seguinte os EUA declararam guerra ao Japão; em 11 de dezembro, Alemanha e Itália declararam guerra aos EUA.",
+  cur:"Sorge avisou Moscou que o Japão não atacaria a Sibéria. Isso permitiu a Stalin trazer tropas do Extremo Oriente para defender Moscou.",
+  fonte:"Fontes: The National WWII Museum; National Park Service."}},
+
+/* ---------------- ATO III ---------------- */
+{ato:2, data:"Junho de 1942 · Oceano Pacífico", titulo:"Batalha de Midway",
+ texto:["Seis meses depois de Pearl Harbor, o Japão domina o Pacífico. O almirante Yamamoto prepara uma armadilha: atacar o atol de Midway e atrair o que restou da frota americana.",
+        "No Havaí, uma pequena equipe de criptógrafos trabalha dia e noite tentando ler as mensagens navais japonesas. Sabem que vem um ataque. Não têm certeza de onde."],
+ pergunta:"O que aconteceu no mar?",
+ pastas:[
+  {cod:"MID-A · 09 fls.", rot:"O código não é decifrado e a frota americana afunda", tipo:"e", frase:"A falsificação entra no acervo. O Havaí fica ameaçado e a costa oeste dos EUA entra em pânico."},
+  {cod:"MID-B · 22 fls.", rot:"Os americanos decifram o código e emboscam a frota japonesa", tipo:"h", frase:"O papel confere. Em um dia o Japão perde quatro porta-aviões. A partir daqui, só recua."},
+  {cod:"MID-C · 11 fls.", rot:"A URSS entra na guerra do Pacífico e divide a frota japonesa", tipo:"s", frase:"A falsificação entra no acervo. Tóquio passa a lutar em duas frentes três anos antes da hora."}],
+ card:{titulo:"Batalha de Midway",
+  corpo:"Entre 4 e 7 de junho de 1942. Criptógrafos da Marinha americana tinham decifrado parte do código naval japonês. Para confirmar o alvo, enviaram uma mensagem falsa dizendo que Midway estava sem água potável; logo depois, os japoneses relataram que o alvo AF estava sem água. O Japão perdeu quatro porta-aviões; os EUA, um.",
+  cur:"O porta-aviões Yorktown, muito danificado no Mar de Coral um mês antes, foi consertado em cerca de três dias no Havaí para lutar em Midway.",
+  fonte:"Fontes: Naval History and Heritage Command; The National WWII Museum."}},
+
+{ato:2, data:"Novembro de 1942 · Stalingrado, URSS", titulo:"Stalingrado",
+ texto:["A ofensiva alemã no sul da URSS tem dois alvos: a cidade no rio Volga e o petróleo do Cáucaso. Dividido, o exército alemão não conquista nenhum dos dois por completo.",
+        "Em Stalingrado luta-se rua por rua. O 6º Exército controla quase toda a cidade em ruínas, mas está no fim de uma linha de abastecimento enorme, com os flancos protegidos por tropas romenas mal armadas."],
+ pergunta:"O que aconteceu no Volga?",
+ pastas:[
+  {cod:"STA-A · 29 fls.", rot:"O 6º Exército é cercado, Hitler proíbe o recuo e ele se rende", tipo:"h", frase:"O papel confere. Pela primeira vez um exército alemão inteiro se rende. A partir daqui, a Alemanha recua no leste."},
+  {cod:"STA-B · 13 fls.", rot:"A Alemanha prioriza o Cáucaso e toma o petróleo de Baku", tipo:"e", frase:"A falsificação entra no acervo. Com o petróleo soviético, os tanques alemães não param mais."},
+  {cod:"STA-C · 20 fls.", rot:"A contraofensiva cerca também as tropas do Cáucaso", tipo:"s", frase:"A falsificação entra no acervo. Dois exércitos alemães presos de uma vez, e a frente sul desaba."}],
+ card:{titulo:"Batalha de Stalingrado",
+  corpo:"De agosto de 1942 a fevereiro de 1943. Em 19 de novembro a Operação Urano rompeu os flancos defendidos por tropas romenas e cercou mais de 250 mil soldados do Eixo. Hitler proibiu a fuga do cerco e uma tentativa de resgate fracassou em dezembro. Os últimos alemães se renderam em 2 de fevereiro de 1943. Dos cerca de 91 mil prisioneiros, só uns 5 mil voltaram para casa.",
+  cur:"Os alemães chegaram aos poços de Maikop, no Cáucaso, mas os soviéticos os tinham destruído antes de recuar.",
+  fonte:"Fontes: Imperial War Museums; Encyclopaedia Britannica."}},
+
+{ato:2, data:"5 de junho de 1944 · Sul da Inglaterra", titulo:"A véspera do Dia D",
+ texto:["Milhares de navios, aviões e mais de 150 mil soldados esperam no sul da Inglaterra. Os alemães sabem que a invasão vem, mas acham que será em Calais, onde os aliados montaram um exército falso com tanques infláveis e mensagens de rádio inventadas.",
+        "O tempo está péssimo. Eisenhower tem uma janela curta e já escreveu uma nota assumindo a culpa caso tudo dê errado."],
+ pergunta:"O que aconteceu nas praias?",
+ pastas:[
+  {cod:"NOR-A · 08 fls.", rot:"O desembarque fracassa e os aliados recuam para a Inglaterra", tipo:"e", frase:"A falsificação entra no acervo. Uma nova tentativa vai levar anos, e a Alemanha manda tudo para o leste."},
+  {cod:"NOR-B · 16 fls.", rot:"Os aliados adiam a invasão e o Exército Vermelho chega ao Reno", tipo:"s", frase:"A falsificação entra no acervo. Quando os aliados enfim desembarcam, os tanques soviéticos já cruzaram a Alemanha."},
+  {cod:"NOR-C · 34 fls.", rot:"O desembarque na Normandia dá certo e Paris é libertada", tipo:"h", frase:"O papel confere. Em dois meses e meio Paris está livre, e a Alemanha luta cercada por dois lados."}],
+ card:{titulo:"Dia D e Operação Fortitude",
+  corpo:"Em 6 de junho de 1944 cerca de 156 mil soldados aliados desembarcaram em cinco praias da Normandia. A Operação Fortitude, com tanques infláveis, falsas mensagens de rádio e agentes duplos, convenceu os alemães de que o ataque principal viria em Calais. A praia de Omaha quase fracassou. Paris foi libertada em 25 de agosto.",
+  cur:"Eisenhower escreveu de verdade uma nota assumindo toda a culpa por um possível fracasso. Ela nunca precisou ser usada.",
+  fonte:"Fontes: The National WWII Museum; Eisenhower Presidential Library."}},
+
+/* ---------------- ATO IV ---------------- */
+{ato:3, data:"27 de fevereiro de 1943 · Vemork, Noruega ocupada", titulo:"A corrida pela bomba",
+ texto:["Desde 1939 físicos alertam que é possível criar uma arma capaz de destruir uma cidade inteira. Os EUA montaram em segredo o Projeto Manhattan; a Alemanha tem seus próprios cientistas.",
+        "Para o programa alemão, uma substância é essencial: a água pesada, produzida numa usina nas montanhas da Noruega. Nesta noite, nove sabotadores noruegueses descem um desfiladeiro coberto de neve."],
+ pergunta:"O que aconteceu em Vemork?",
+ pastas:[
+  {cod:"ATO-A · 12 fls.", rot:"A sabotagem funciona e o programa alemão trava", tipo:"h", frase:"O papel confere. A Alemanha perde sua água pesada. Só os EUA terão a bomba em 1945."},
+  {cod:"ATO-B · 07 fls.", rot:"A sabotagem falha e o programa nuclear alemão acelera", tipo:"e", frase:"A falsificação entra no acervo. O mundo entra numa corrida em que o Reich também pode chegar primeiro."},
+  {cod:"ATO-C · 19 fls.", rot:"Espiões soviéticos copiam o projeto e a URSS tem a bomba em 1945", tipo:"s", frase:"A falsificação entra no acervo. Quando a guerra terminar, Moscou não vai ficar atrás de Washington."}],
+ card:{titulo:"Operação Gunnerside",
+  corpo:"Na noite de 27 para 28 de fevereiro de 1943, sabotadores noruegueses destruíram os equipamentos de água pesada de Vemork sem disparar um tiro. Em 1944 uma balsa com o estoque restante foi afundada. O programa alemão, sem prioridade e sem recursos, nunca chegou perto de uma bomba. Os EUA testaram a primeira em 16 de julho de 1945; a URSS, em 1949, com ajuda de espiões como Klaus Fuchs.",
+  cur:"O Projeto Manhattan chegou a empregar cerca de 130 mil pessoas, e a maioria não sabia o que estava construindo.",
+  fonte:"Fontes: Atomic Heritage Foundation; Norsk Industriarbeidermuseum."}},
+
+{ato:3, data:"Fevereiro de 1945 · Yalta, Crimeia", titulo:"Conferência de Yalta",
+ texto:["A vitória sobre a Alemanha é questão de meses. Num antigo palácio de verão dos czares, Roosevelt, Churchill e Stalin se reúnem para desenhar o mundo do pós-guerra.",
+        "Roosevelt está doente e quer a URSS na guerra contra o Japão e numa nova organização pela paz. Churchill quer uma Polônia livre. Stalin quer uma Europa Oriental que nunca mais sirva de corredor para invasões."],
+ pergunta:"O que saiu de Yalta?",
+ pastas:[
+  {cod:"YAL-A · 09 fls.", rot:"O Ocidente aceita uma paz separada com uma Alemanha sem Hitler", tipo:"e", frase:"A falsificação entra no acervo. A aliança com Moscou se rompe, e alemães e soviéticos ficam frente a frente."},
+  {cod:"YAL-B · 26 fls.", rot:"A Alemanha é dividida em zonas e Stalin promete eleições na Polônia", tipo:"h", frase:"O papel confere. A promessa sobre a Polônia não será cumprida. Começa a se desenhar a fronteira da Guerra Fria."},
+  {cod:"YAL-C · 15 fls.", rot:"Roosevelt cede a Alemanha inteira à esfera soviética", tipo:"s", frase:"A falsificação entra no acervo. Do Báltico ao Reno, a Europa terá governos alinhados a Moscou."}],
+ card:{titulo:"Conferência de Yalta",
+  corpo:"De 4 a 11 de fevereiro de 1945. Os aliados decidiram dividir a Alemanha em zonas de ocupação, com uma também para a França. Stalin prometeu eleições livres na Polônia, que não aconteceram como prometido, e aceitou entrar na guerra contra o Japão até três meses após a derrota alemã. Roosevelt morreu dois meses depois.",
+  cur:"Houve contatos secretos com líderes nazistas em 1945, como a oferta de Himmler em abril para render-se só aos aliados ocidentais. Todas foram recusadas: os aliados exigiam rendição incondicional.",
+  fonte:"Fontes: Office of the Historian, Departamento de Estado dos EUA."}},
+
+{ato:3, data:"Agosto de 1945 · Oceano Pacífico", titulo:"O fim no Pacífico", aviso:"Esta pasta trata da morte de civis em grande escala.",
+ texto:["A Alemanha se rendeu em maio. O Japão, não. Em Okinawa a batalha matou mais de 100 mil pessoas entre soldados e civis, e os EUA preparam uma invasão que poderia custar muito mais.",
+        "Em julho os aliados exigiram a rendição incondicional. Tóquio não respondeu. No deserto do Novo México os EUA acabam de testar uma arma nova. Na fronteira da Manchúria, mais de um milhão de soldados soviéticos esperam."],
+ pergunta:"Como terminou a guerra no Pacífico?",
+ pastas:[
+  {cod:"HIR-A · 11 fls.", rot:"O Japão resiste e negocia a paz mantendo Manchúria e Coreia", tipo:"e", frase:"A falsificação entra no acervo. O império japonês sobrevive à guerra, e a Ásia continua sob domínio de Tóquio."},
+  {cod:"HIR-B · 17 fls.", rot:"Sem a bomba, a URSS invade o norte do Japão e o país é dividido", tipo:"s", frase:"A falsificação entra no acervo. O Japão é partido em dois, como a Coreia."},
+  {cod:"HIR-C · 30 fls.", rot:"Os EUA lançam as bombas atômicas e a URSS ataca a Manchúria", tipo:"h", frase:"O papel confere. Em poucos dias o Japão se rende. Começa a era nuclear."}],
+ card:{titulo:"Hiroshima, Nagasaki e a Manchúria",
+  corpo:"Em 6 de agosto de 1945 os EUA lançaram uma bomba atômica sobre Hiroshima. Em 8 de agosto a URSS declarou guerra ao Japão e invadiu a Manchúria. Em 9 de agosto uma segunda bomba atingiu Nagasaki. Estimativas apontam cerca de 140 mil mortos em Hiroshima e 74 mil em Nagasaki até o fim de 1945, a maioria civis. Em 15 de agosto o imperador Hirohito anunciou a rendição.",
+  cur:"Historiadores discutem até hoje o que levou o Japão a se render: uns destacam as bombas, outros dão mais peso à entrada da URSS na guerra. Também se discute se as bombas eram necessárias e se eram justificáveis.",
+  fonte:"Fontes: The National WWII Museum; Museu Memorial da Paz de Hiroshima."}},
+
+/* ---------------- ATO V ---------------- */
+{ato:4, data:"Junho de 1947 · Washington, EUA", titulo:"O Plano Marshall",
+ texto:["Dois anos depois da guerra a Europa ainda está em ruínas. O inverno de 1946 para 1947 foi um dos mais duros do século, e falta comida e carvão. Na França e na Itália os partidos comunistas estão entre os mais votados.",
+        "O secretário de Estado George Marshall propõe um programa gigante de ajuda para reconstruir a Europa. No Congresso, muitos acham que os EUA já gastaram demais com problemas dos outros."],
+ pergunta:"O que o Congresso decidiu?",
+ pastas:[
+  {cod:"MAR-A · 24 fls.", rot:"O Congresso aprova o plano e a Europa Ocidental se reconstrói", tipo:"h", frase:"O papel confere. Fábricas voltam a funcionar, e o comunismo perde força nas urnas do Ocidente."},
+  {cod:"MAR-B · 13 fls.", rot:"O Congresso rejeita e os comunistas vencem na Itália e na França", tipo:"s", frase:"A falsificação entra no acervo. Mais dois países grandes entram na órbita de Moscou."},
+  {cod:"MAR-C · 10 fls.", rot:"Washington condiciona a ajuda ao rearmamento imediato da Alemanha", tipo:"e", frase:"A falsificação entra no acervo. A Europa reconstrói fábricas de armas antes de reconstruir casas."}],
+ card:{titulo:"Programa de Recuperação Europeia",
+  corpo:"Marshall apresentou a proposta em 5 de junho de 1947, num discurso em Harvard. O programa foi aprovado em abril de 1948 e distribuiu cerca de 13 bilhões de dólares a países da Europa Ocidental até 1951. A URSS recusou a ajuda e pressionou os países do Leste a recusarem também. Em 1948 Moscou bloqueou Berlim Ocidental, e os aliados abasteceram a cidade por avião durante quase um ano.",
+  cur:"A Tchecoslováquia chegou a aceitar a ajuda, mas recuou depois de pressão de Moscou.",
+  fonte:"Fontes: George C. Marshall Foundation; Office of the Historian."}},
+
+{ato:4, data:"22 de outubro de 1962 · Washington, EUA", titulo:"Crise dos Mísseis", chave:"cuba",
+ texto:["Fotos de um avião espião mostram bases de mísseis nucleares soviéticos sendo montadas em Cuba, a cerca de 150 quilômetros da Flórida. De lá podem atingir a maior parte dos EUA em minutos.",
+        "Kennedy reúne seus conselheiros. Os chefes militares querem bombardear as bases e invadir a ilha. Outros propõem cercar Cuba com navios. Navios soviéticos seguem rumo ao Caribe."],
+ pergunta:"O que Washington fez?",
+ pastas:[
+  {cod:"CUB-A · 14 fls.", rot:"Os EUA recuam e aceitam os mísseis em Cuba", tipo:"s", frase:"A falsificação entra no acervo. Os aliados dos EUA no mundo inteiro passam a duvidar de Washington."},
+  {cod:"CUB-B · 28 fls.", rot:"Os EUA cercam Cuba com navios e negociam um acordo", tipo:"h", frase:"O papel confere. Depois de treze dias de tensão os mísseis saem de Cuba e, em segredo, os americanos saem da Turquia."},
+  {cod:"CUB-C · 03 fls.", rot:"Os EUA bombardeiam as bases e invadem Cuba", tipo:"e", marca:"cuba-invasao", frase:"A falsificação entra no acervo. Os bombardeiros são abastecidos. No mar, navios americanos cercam um submarino soviético que ninguém sabe que carrega um torpedo nuclear."}],
+ card:{titulo:"Crise dos Mísseis de Cuba",
+  corpo:"Durou treze dias, de 16 a 28 de outubro de 1962. A URSS instalou os mísseis depois da tentativa americana de invadir Cuba em 1961 e da instalação de mísseis americanos na Turquia. Em 22 de outubro Kennedy anunciou uma quarentena naval. No dia 28 Kruschev aceitou retirar os mísseis em troca da promessa de não invadir Cuba; em segredo, os EUA também retiraram os seus da Turquia.",
+  cur:"Em 27 de outubro, o submarino soviético B-59, cercado e sem contato com Moscou, preparou um torpedo nuclear. O disparo exigia o acordo de três oficiais. Vasili Arkhipov recusou. Depois da crise nasceu a linha direta entre Washington e Moscou.",
+  fonte:"Fontes: John F. Kennedy Presidential Library; National Security Archive."}},
+
+{ato:4, data:"9 de novembro de 1989 · Berlim Oriental", titulo:"A queda do Muro",
+ texto:["Em Moscou, Gorbachev prometeu abertura e reformas, e no Leste Europeu as pessoas levaram a sério. A Hungria abriu a fronteira com a Áustria e milhares de alemães orientais fugiram por ali. Em Leipzig, as marchas crescem a cada segunda-feira.",
+        "Nesta noite um porta-voz anuncia, meio atrapalhado, novas regras de viagem que valeriam imediatamente. Milhares correm para os postos de fronteira. Os guardas não têm ordens."],
+ pergunta:"O que aconteceu no Muro?",
+ pastas:[
+  {cod:"BER-A · 12 fls.", rot:"Moscou envia tanques e os protestos são esmagados", tipo:"s", frase:"A falsificação entra no acervo. O bloco sobrevive, mais fechado do que nunca, e o medo volta às ruas."},
+  {cod:"BER-B · 09 fls.", rot:"Surge uma Alemanha neutra e rearmada entre os dois blocos", tipo:"e", frase:"A falsificação entra no acervo. No centro da Europa nasce uma potência que não responde a ninguém."},
+  {cod:"BER-C · 33 fls.", rot:"Os guardas abrem as passagens e o muro cai", tipo:"h", frase:"O papel confere. Em menos de um ano a Alemanha se reunifica. Em dois, a URSS deixa de existir."}],
+ card:{titulo:"A queda do Muro de Berlim",
+  corpo:"Na noite de 9 de novembro de 1989 o porta-voz Günter Schabowski anunciou por engano que a nova lei de viagens valia de imediato. Multidões foram aos postos de fronteira e, sem ordens claras, os guardas abriram as passagens. A Alemanha se reunificou em 3 de outubro de 1990. Em dezembro de 1991 a URSS se dissolveu em 15 países, e a Guerra Fria terminou.",
+  cur:"No mesmo ano, em junho de 1989, o governo da China reprimiu com tanques os protestos na Praça da Paz Celestial. A opção de usar a força estava sobre a mesa.",
+  fonte:"Fontes: Stiftung Berliner Mauer; Encyclopaedia Britannica."}}
+];
+
+</script>
+<script>
+(function(){
+"use strict";
+var KEYH="assets/img/keyart-h.webp",KEYV="assets/img/keyart-v.webp",MESAH="assets/img/ato1-h.webp",MESAV="assets/img/ato1-v.webp";
+/* uma sala por ato, com os polígonos das 3 pastas medidos em cada foto */
+var MESAS={
+ 1:{
+  h:{w:1376,h:768,url:"assets/img/ato1-h.webp",p:[
+    [[.311,.566],[.419,.559],[.426,.754],[.305,.760]],
+    [[.433,.557],[.544,.557],[.549,.752],[.429,.752]],
+    [[.559,.559],[.677,.566],[.684,.760],[.556,.754]]]},
+  v:{w:768,h:1376,url:"assets/img/ato1-v.webp",p:[
+    [[.038,.570],[.337,.556],[.348,.737],[.028,.751]],
+    [[.354,.553],[.649,.553],[.657,.744],[.347,.744]],
+    [[.664,.556],[.962,.570],[.972,.751],[.652,.737]]]}},
+ 2:{
+  h:{w:1376,h:768,url:"assets/img/ato2-h.webp",p:[[[0.2443, 0.6283], [0.4057, 0.6283], [0.4057, 0.7777], [0.2443, 0.7777]], [[0.4136, 0.6283], [0.575, 0.6283], [0.575, 0.7777], [0.4136, 0.7777]], [[0.5893, 0.6283], [0.7507, 0.6283], [0.7507, 0.7777], [0.5893, 0.7777]]]},
+  v:{w:768,h:1376,url:"assets/img/ato2-v.webp",p:[[[0.1724, 0.592], [0.3968, 0.592], [0.3968, 0.7025], [0.1724, 0.7025]], [[0.3788, 0.592], [0.6032, 0.592], [0.6032, 0.7025], [0.3788, 0.7025]], [[0.6519, 0.592], [0.8763, 0.592], [0.8763, 0.7025], [0.6519, 0.7025]]]}},
+ 3:{
+  h:{w:1376,h:768,url:"assets/img/ato3-h.webp",p:[[[0.3233, 0.4751], [0.441, 0.4751], [0.441, 0.7589], [0.3233, 0.7589]], [[0.4411, 0.4751], [0.5588, 0.4751], [0.5588, 0.7589], [0.4411, 0.7589]], [[0.5747, 0.4751], [0.6924, 0.4751], [0.6924, 0.7589], [0.5747, 0.7589]]]},
+  v:{w:768,h:1376,url:"assets/img/ato3-v.webp",p:[[[0.1447, 0.574], [0.3835, 0.574], [0.3835, 0.7117], [0.1447, 0.7117]], [[0.3857, 0.574], [0.6245, 0.574], [0.6245, 0.7117], [0.3857, 0.7117]], [[0.655, 0.574], [0.8938, 0.574], [0.8938, 0.7117], [0.655, 0.7117]]]}},
+ 4:{
+  h:{w:1376,h:768,url:"assets/img/ato4-h.webp",p:[[[0.3302, 0.595], [0.4499, 0.595], [0.4499, 0.8208], [0.3302, 0.8208]], [[0.458, 0.595], [0.5777, 0.595], [0.5777, 0.8208], [0.458, 0.8208]], [[0.5859, 0.595], [0.7056, 0.595], [0.7056, 0.8208], [0.5859, 0.8208]]]},
+  v:{w:768,h:1376,url:"assets/img/ato4-v.webp",p:[[[0.1007, 0.5521], [0.3557, 0.5521], [0.3557, 0.7017], [0.1007, 0.7017]], [[0.3738, 0.5521], [0.6288, 0.5521], [0.6288, 0.7017], [0.3738, 0.7017]], [[0.6456, 0.5521], [0.9006, 0.5521], [0.9006, 0.7017], [0.6456, 0.7017]]]}},
+ 5:{
+  h:{w:1376,h:768,url:"assets/img/ato5-h.webp",p:[[[0.2696, 0.584], [0.4176, 0.584], [0.4176, 0.7548], [0.2696, 0.7548]], [[0.426, 0.584], [0.574, 0.584], [0.574, 0.7548], [0.426, 0.7548]], [[0.586, 0.584], [0.734, 0.584], [0.734, 0.7548], [0.586, 0.7548]]]},
+  v:{w:768,h:1376,url:"assets/img/ato5-v.webp",p:[[[0.134, 0.5573], [0.3686, 0.5573], [0.3686, 0.678], [0.134, 0.678]], [[0.3801, 0.5573], [0.6147, 0.5573], [0.6147, 0.678], [0.3801, 0.678]], [[0.6353, 0.5573], [0.8699, 0.5573], [0.8699, 0.678], [0.6353, 0.678]]]}}
+};
+
+/* os três arquivos, em PNG transparente */
+var ARQ=["assets/img/arq-i.webp","assets/img/arq-ii.webp","assets/img/arq-iii.webp"];
+/* tom das laterais por arquivo: o miolo nunca pode ser mais claro que a capa */
+var MIOLO=[[198,176,140,[120,100,70]],[178,153,113,[104,84,56]],[136,124,96,[70,62,44]]];
+function arteArquivo(i){
+  var m=MIOLO[i],n=10,cam="";
+  for(var k=1;k<=n;k++){
+    var t=(k-1)/(n-1);
+    var r=Math.round(m[0]+(m[3][0]-m[0])*t),
+        g=Math.round(m[1]+(m[3][1]-m[1])*t),
+        b=Math.round(m[2]+(m[3][2]-m[2])*t);
+    cam+='<i style="--k:'+k+';background:rgb('+r+','+g+','+b+')"></i>';
+  }
+  return '<div id="sombra"></div><div id="vol">'+cam+'</div>'+
+         '<div id="objFoto"><img src="'+ARQ[i]+'" alt="" draggable="false"></div>'+
+         '<div id="lustro"></div>';
+}
+
+/* ===== SOM ===== */
+var AC=window.AudioContext||window.webkitAudioContext,ctx=null,somOn=true;
+function ac(){if(!ctx&&AC){try{ctx=new AC();}catch(e){ctx=null;}}if(ctx&&ctx.state==="suspended")ctx.resume();return ctx;}
+function env(n,t,a,d,p){var g=ctx.createGain();g.gain.setValueAtTime(.0001,t);
+  g.gain.exponentialRampToValueAtTime(p,t+a);g.gain.exponentialRampToValueAtTime(.0001,t+a+d);
+  n.connect(g);g.connect(ctx.destination);return g;}
+function rd(d){var n=Math.floor(ctx.sampleRate*d),b=ctx.createBuffer(1,n,ctx.sampleRate),a=b.getChannelData(0);
+  for(var i=0;i<n;i++)a[i]=(Math.random()*2-1)*(1-i/n);var s=ctx.createBufferSource();s.buffer=b;return s;}
+function tm(f,t){var o=ctx.createOscillator();o.type=t||"sine";o.frequency.value=f;return o;}
+var som={
+  papel:function(){if(!somOn||!ac())return;var t=ctx.currentTime,n=rd(.16),f=ctx.createBiquadFilter();
+    f.type="bandpass";f.frequency.value=2600;f.Q.value=.7;n.connect(f);env(f,t,.004,.14,.06);n.start(t);n.stop(t+.19);},
+  pega:function(){if(!somOn||!ac())return;var t=ctx.currentTime,n=rd(.3),f=ctx.createBiquadFilter();
+    f.type="bandpass";f.frequency.value=1500;f.Q.value=.5;n.connect(f);env(f,t,.012,.27,.13);n.start(t);n.stop(t+.33);
+    var o=tm(320,"sine");env(o,t,.02,.3,.05);o.start(t);o.stop(t+.35);},
+  carimbo:function(ok){if(!somOn||!ac())return;var t=ctx.currentTime,n=rd(.1),f=ctx.createBiquadFilter();
+    f.type="lowpass";f.frequency.value=840;n.connect(f);env(f,t,.002,.1,.42);n.start(t);n.stop(t+.12);
+    var o=tm(ok?152:94,"triangle");env(o,t,.002,ok?.2:.55,.25);o.start(t);o.stop(t+.7);
+    if(!ok){var p=tm(69,"sine");env(p,t+.05,.012,.7,.2);p.start(t+.05);p.stop(t+.85);}},
+  conq:function(){if(!somOn||!ac())return;var t=ctx.currentTime;
+    [[523.25,0],[659.25,.075],[880,.15]].forEach(function(p){var o=tm(p[0],"triangle");
+      env(o,t+p[1],.006,.22,.1);o.start(t+p[1]);o.stop(t+p[1]+.3);});},
+  pag:function(){if(!somOn||!ac())return;var t=ctx.currentTime,n=rd(.25),f=ctx.createBiquadFilter();
+    f.type="highpass";f.frequency.value=1700;n.connect(f);env(f,t,.03,.21,.04);n.start(t);n.stop(t+.28);},
+  ato:function(){if(!somOn||!ac())return;var t=ctx.currentTime;
+    [[196,0],[261.63,.16]].forEach(function(p){var o=tm(p[0],"sine");env(o,t+p[1],.03,.8,.085);o.start(t+p[1]);o.stop(t+p[1]+1);});},
+  vit:function(){if(!somOn||!ac())return;var t=ctx.currentTime;
+    [[392,0],[523.25,.13],[659.25,.26],[784,.39]].forEach(function(p){var o=tm(p[0],"triangle");
+      env(o,t+p[1],.01,.5,.09);o.start(t+p[1]);o.stop(t+p[1]+.6);});},
+  der:function(){if(!somOn||!ac())return;var t=ctx.currentTime;
+    [[146.83,0],[123.47,.3],[98,.62]].forEach(function(p){var o=tm(p[0],"sine");
+      env(o,t+p[1],.04,1.1,.12);o.start(t+p[1]);o.stop(t+p[1]+1.3);});}
+};
+
+function $(i){return document.getElementById(i);}
+
+/* ===== NARRAÇÃO =====
+   Hoje usa a voz sintética do navegador. Quando os áudios gravados chegarem,
+   basta trocar o corpo de narra() por um <audio> apontando para o id do trecho. */
+var narraOn=false, vozPt=null, temVoz=!!(window.speechSynthesis&&window.SpeechSynthesisUtterance);
+function achaVoz(){
+  if(!temVoz)return;
+  var vs=speechSynthesis.getVoices()||[];
+  vozPt = vs.filter(function(v){return /^pt[-_]BR/i.test(v.lang);})[0]
+       || vs.filter(function(v){return /^pt/i.test(v.lang);})[0] || null;
+}
+if(temVoz){ achaVoz(); speechSynthesis.onvoiceschanged=achaVoz; }
+function calaNarra(){ if(temVoz)speechSynthesis.cancel(); }
+function narra(){
+  if(!narraOn||!temVoz)return;
+  var txt=Array.prototype.slice.call(arguments).filter(Boolean).join(". ").replace(/\.\.+/g,".");
+  if(!txt)return;
+  speechSynthesis.cancel();
+  var u=new SpeechSynthesisUtterance(txt);
+  u.lang="pt-BR"; if(vozPt)u.voice=vozPt; u.rate=.98; u.pitch=1; u.volume=1;
+  speechSynthesis.speak(u);
+}
+var B=document.body;
+
+/* ===== FOTO + RECORTES ===== */
+var fotoAtual={tipo:"key",grade:"none"};
+function vertical(){return window.innerHeight>=window.innerWidth;}
+var atoFoto=1, videoOn=true;
+var VIDEOS={
+ "1h":"assets/video/ato1-h.mp4",
+ "2h":"assets/video/ato2-h.mp4",
+ "3h":"assets/video/ato3-h.mp4",
+ "4h":"assets/video/ato4-h.mp4",
+ "5h":"assets/video/ato5-h.mp4"
+};
+/* verticais: quando existirem, acrescente "1v":"assets/video/ato1-v.mp4" etc.
+   e tire a checagem !vertical() de movimentoOk() */
+function temVideo(){return Object.keys(VIDEOS).length>0;}
+function chaveVideo(){return atoFoto+(vertical()?"v":"h");}
+function movimentoOk(){
+  /* por ora só no desktop: os loops verticais ainda não existem */
+  return videoOn && temVideo() && !vertical()
+      && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+/* ===== AMBIENTE: um loop longo por ato, independente do vídeo ===== */
+var AMB={
+ "1":"assets/audio/amb-ato1.mp3",
+ "2":"assets/audio/amb-ato2.mp3",
+ "3":"assets/audio/amb-ato3.mp3",
+ "4":"assets/audio/amb-ato4.mp3",
+ "5":"assets/audio/amb-ato5.mp3"
+};
+var elAmb=null, ambAtual="", ambVol=0.34, fadeT=null;
+function temAmb(){return Object.keys(AMB).length>0;}
+function iniAmb(){
+  if(elAmb||!temAmb())return;
+  elAmb=document.createElement("audio");
+  elAmb.loop=true; elAmb.preload="none"; elAmb.volume=0;
+  elAmb.setAttribute("aria-hidden","true");
+  document.body.appendChild(elAmb);
+}
+function rampa(de,para,ms,fim){
+  clearInterval(fadeT);
+  var t0=Date.now();
+  fadeT=setInterval(function(){
+    var k=Math.min(1,(Date.now()-t0)/ms);
+    if(elAmb)elAmb.volume=Math.max(0,Math.min(1,de+(para-de)*k));
+    if(k>=1){clearInterval(fadeT); if(fim)fim();}
+  },40);
+}
+function tocaAmb(ato){
+  if(!temAmb())return;
+  iniAmb();
+  var u=AMB[String(ato)];
+  if(!somOn||!u){paraAmb();return;}
+  if(ambAtual===u){ if(elAmb.paused){elAmb.play().catch(function(){});} rampa(elAmb.volume,ambVol,600); return; }
+  var troca=function(){
+    ambAtual=u; elAmb.src=u; elAmb.volume=0;
+    var p=elAmb.play(); if(p&&p.catch)p.catch(function(){});
+    rampa(0,ambVol,1200);
+  };
+  if(elAmb.src&&!elAmb.paused) rampa(elAmb.volume,0,700,troca); else troca();
+}
+function paraAmb(){
+  if(!elAmb)return;
+  rampa(elAmb.volume,0,500,function(){try{elAmb.pause();}catch(e){}});
+}
+var PAUSA_MS=30000, tmrVideo=null;
+function paraVideo(){
+  clearTimeout(tmrVideo);
+  var v=$("video"); v.classList.remove("on"); B.dataset.video="0"; v.dataset.chave="";
+  try{v.pause(); v.removeAttribute("src"); v.load();}catch(e){}
+}
+/* toca uma vez, segura o último quadro por 30 s, recomeça.
+   Como o 1º quadro do vídeo é igual ao último e igual à foto, nada salta. */
+function tocaVideo(){
+  var v=$("video"), u=VIDEOS[chaveVideo()];
+  if(!movimentoOk()||!u){paraVideo();return;}
+  if(v.dataset.chave===chaveVideo())return;
+  clearTimeout(tmrVideo);
+  v.dataset.chave=chaveVideo();
+  v.classList.remove("on"); B.dataset.video="0";
+  v.loop=false; v.src=u; v.load();
+  v.oncanplay=function(){ v.classList.add("on"); B.dataset.video="1"; };
+  v.onplaying=function(){ B.dataset.video="1"; };
+  v.onended=function(){
+    B.dataset.video="2";                 /* segura o último quadro */
+    clearTimeout(tmrVideo);
+    tmrVideo=setTimeout(function(){
+      if(!movimentoOk()||B.dataset.fase!=="mesa"&&B.dataset.fase!=="brief"){return;}
+      try{ v.currentTime=0; var q=v.play(); if(q&&q.catch)q.catch(function(){}); }catch(e){}
+    }, PAUSA_MS);
+  };
+  v.onerror=function(){ paraVideo(); };
+  var p=v.play(); if(p&&p.catch)p.catch(function(){paraVideo();});
+}
+function mesaAtual(){return MESAS[atoFoto][vertical()?"v":"h"];}
+function urlFoto(tipo){return tipo==="key"?(vertical()?KEYV:KEYH):mesaAtual().url;}
+function foto(tipo,grade){
+  fotoAtual={tipo:tipo,grade:grade||"none"};
+  B.dataset.ato=(tipo==="mesa")?String(atoFoto):"0";
+  if(tipo==="mesa"){tocaVideo();tocaAmb(atoFoto);} else {paraVideo();}
+  var f=$("foto");f.style.backgroundImage="url("+urlFoto(tipo)+")";f.style.filter=fotoAtual.grade;f.classList.add("on");
+  if(tipo==="mesa") posiciona();
+}
+/* matemática do background-size:cover, para alinhar os contornos à foto */
+function geo(){
+  var c=$("palco"),cw=c.clientWidth,ch=c.clientHeight;
+  var k=mesaAtual(),esc=Math.max(cw/k.w,ch/k.h);
+  var dw=k.w*esc,dh=k.h*esc;
+  return {cw:cw,ch:ch,dw:dw,dh:dh,ox:(cw-dw)/2,oy:(ch-dh)/2,polis:k.p};
+}
+var polis=[],nums=[],halos=[];
+/* transforma os 4 cantos num caminho de cantos arredondados */
+function arredonda(pts,r){
+  var n=pts.length,d="";
+  for(var i=0;i<n;i++){
+    var a=pts[(i-1+n)%n], b=pts[i], c=pts[(i+1)%n];
+    function rumo(p,q){var dx=q[0]-p[0],dy=q[1]-p[1],m=Math.hypot(dx,dy)||1;return [dx/m,dy/m,m];}
+    var ab=rumo(b,a), bc=rumo(b,c);
+    var ra=Math.min(r,ab[2]/2,bc[2]/2);
+    var p1=[b[0]+ab[0]*ra, b[1]+ab[1]*ra], p2=[b[0]+bc[0]*ra, b[1]+bc[1]*ra];
+    d += (i===0?"M":"L")+p1[0].toFixed(1)+","+p1[1].toFixed(1)+
+         " Q"+b[0].toFixed(1)+","+b[1].toFixed(1)+" "+p2[0].toFixed(1)+","+p2[1].toFixed(1);
+  }
+  return d+"Z";
+}
+function montaPastas(d){
+  var svg=$("contornos"),cn=$("numeros");
+  svg.innerHTML="";cn.innerHTML="";polis=[];nums=[];halos=[];
+  d.pastas.forEach(function(_,i){
+    var p=d.pastas[S.ordem[S.i][i]];
+    var halo=document.createElementNS("http://www.w3.org/2000/svg","path");
+    halo.setAttribute("class","brilhoPasta");svg.appendChild(halo);
+    var pg=document.createElementNS("http://www.w3.org/2000/svg","path");
+    pg.setAttribute("tabindex","0");
+    pg.setAttribute("role","button");
+    pg.setAttribute("aria-label","Arquivo "+(i+1)+": "+p.cod+". "+p.rot);
+    pg.addEventListener("click",function(){inspeciona(i);});
+    pg.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();inspeciona(i);}});
+    pg.addEventListener("pointerenter",function(){
+      if(sel===null)som.papel();
+      nums[i].classList.add("pula");halo.classList.add("on");});
+    pg.addEventListener("pointerleave",function(){
+      nums[i].classList.remove("pula");halo.classList.remove("on");});
+    pg.addEventListener("focus",function(){nums[i].classList.add("pula");halo.classList.add("on");});
+    pg.addEventListener("blur",function(){nums[i].classList.remove("pula");halo.classList.remove("on");});
+    svg.appendChild(pg);polis.push(pg);halos.push(halo);
+    var n=document.createElement("div");n.className="num";n.textContent=String(i+1);
+    cn.appendChild(n);nums.push(n);
+  });
+  posiciona();
+}
+function posiciona(){
+  if(!polis.length)return;
+  var g=geo(),svg=$("contornos");
+  svg.style.left=g.ox+"px";svg.style.top=g.oy+"px";
+  svg.style.width=g.dw+"px";svg.style.height=g.dh+"px";
+  svg.setAttribute("viewBox","0 0 "+Math.round(g.dw)+" "+Math.round(g.dh));
+  g.polis.forEach(function(pts,i){
+    if(!polis[i])return;
+    var px=pts.map(function(q){return [q[0]*g.dw, q[1]*g.dh];});
+    var cam=arredonda(px, Math.min(g.dw,g.dh)*0.035);
+    polis[i].setAttribute("d",cam);
+    if(halos[i])halos[i].setAttribute("d",cam);
+    var cx=0,cy=0;pts.forEach(function(q){cx+=q[0];cy+=q[1];});
+    cx/=pts.length;cy/=pts.length;
+    nums[i].style.left=(g.ox+cx*g.dw)+"px";
+    nums[i].style.top=(g.oy+pts[0][1]*g.dh-16)+"px";
+    nums[i].dataset.cx=g.ox+cx*g.dw;nums[i].dataset.cy=g.oy+cy*g.dh;
+  });
+}
+var tm_;
+window.addEventListener("resize",function(){clearTimeout(tm_);tm_=setTimeout(function(){
+  if(fotoAtual.tipo){
+    if(fotoAtual.tipo==="mesa"&&!movimentoOk())paraVideo();
+    $("video").dataset.chave="";
+    foto(fotoAtual.tipo,fotoAtual.grade);
+  }},140);});
+
+(function poeira(){
+  if(window.matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  var c=$("poeira"),fr=document.createDocumentFragment();
+  for(var i=0;i<26;i++){var d=document.createElement("div");d.className="cisco";
+    d.style.left=(10+Math.random()*80)+"%";d.style.top=(20+Math.random()*60)+"%";
+    d.style.setProperty("--dx",(Math.random()*90-45)+"px");
+    d.style.setProperty("--dy",(-40-Math.random()*120)+"px");
+    d.style.animationDuration=(9+Math.random()*13)+"s";
+    d.style.animationDelay=(Math.random()*14)+"s";
+    fr.appendChild(d);}
+  c.appendChild(fr);
+})();
+(function brasas(){
+  if(window.matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  var c=$("brasas"),fr=document.createDocumentFragment();
+  for(var i=0;i<18;i++){var b=document.createElement("div");b.className="brasa";
+    b.style.left=(Math.random()*100)+"%";b.style.bottom=(-8+Math.random()*24)+"vh";
+    b.style.setProperty("--dx",(Math.random()*16-8)+"vw");
+    b.style.animationDuration=(12+Math.random()*16)+"s";b.style.animationDelay=(Math.random()*18)+"s";
+    fr.appendChild(b);}
+  c.appendChild(fr);
+})();
+
+/* ===== CONQUISTAS E INSÍGNIAS ===== */
+var CONQ=[
+ {id:"selo",      nome:"O Primeiro Selo",        desc:"Você validou seu primeiro documento autêntico. O acervo começou a ser reconstruído.", metal:"latao",  forma:"circ",   glifo:"selo"},
+ {id:"munique",   nome:"Contra o Apaziguamento", desc:"Reconheceu o que de fato saiu de Munique em 1938, a decisão que a Europa levou anos para entender.", metal:"bronze", forma:"escudo", glifo:"guarda"},
+ {id:"olho",      nome:"Olho Treinado",          desc:"Três documentos autênticos seguidos. Você está lendo os sinais da falsificação.", metal:"latao",  forma:"circ",   glifo:"olho"},
+ {id:"cinco",     nome:"Cinco Selos",            desc:"Cinco documentos autênticos no acervo. A reconstrução deixou de ser sorte.", metal:"bronze", forma:"circ",   glifo:"cinco"},
+ {id:"travessia", nome:"A Travessia",            desc:"Você atravessou os cinco atos, de Munique em 1938 até a queda do Muro em 1989.", metal:"bronze", forma:"escudo", glifo:"rota"},
+ {id:"ato",       nome:"Ato Impecável",          desc:"Um ato inteiro sem deixar passar uma única falsificação.", metal:"prata",  forma:"estrela",glifo:"estrela"},
+ {id:"codigo",    nome:"Leitor de Códigos",      desc:"Acertou Midway, a batalha que foi decidida por criptógrafos antes de ser decidida no mar.", metal:"bronze", forma:"circ",   glifo:"morse"},
+ {id:"reencontro",nome:"Reencontro",             desc:"Deixou uma falsificação passar e depois emendou três autênticos. A história pode ser retomada.", metal:"bronze", forma:"escudo", glifo:"setas"},
+ {id:"mao",       nome:"Mão Firme",              desc:"Seis documentos autênticos seguidos, sem hesitar.", metal:"prata",  forma:"circ",   glifo:"barras"},
+ {id:"metade",    nome:"Metade Salva",           desc:"Mais da metade do acervo do século está correta.", metal:"prata",  forma:"circ",   glifo:"meio"},
+ {id:"dois",      nome:"Dois Atos Limpos",       desc:"Dois atos inteiros sem nenhuma falsificação validada.", metal:"ouro",   forma:"estrela",glifo:"duasestrelas"},
+ {id:"cuba",      nome:"Perto Demais",           desc:"Você abriu a pasta da invasão de Cuba. Em outubro de 1962, foi por muito pouco.", metal:"ferro",  forma:"escudo", glifo:"sonar"},
+ {id:"frio",      nome:"O Fim da Guerra Fria",   desc:"Os três documentos do Ato V, de 1947 a 1989, validados corretamente.", metal:"ouro",   forma:"circ",   glifo:"muro"},
+ {id:"mestre",    nome:"Arquivista-Mestre",      desc:"Quinze de quinze. Não restou uma única falsificação no acervo do século XX.", metal:"ouro",   forma:"estrela",glifo:"chave"}
+];
+function conqPorId(id){for(var i=0;i<CONQ.length;i++)if(CONQ[i].id===id)return CONQ[i];return null;}
+
+/* --- as 14 insígnias, em PNG transparente --- */
+var INSIG={
+ selo:"assets/img/ins-selo.webp",
+ munique:"assets/img/ins-munique.webp",
+ olho:"assets/img/ins-olho.webp",
+ cinco:"assets/img/ins-cinco.webp",
+ travessia:"assets/img/ins-travessia.webp",
+ ato:"assets/img/ins-ato.webp",
+ codigo:"assets/img/ins-codigo.webp",
+ reencontro:"assets/img/ins-reencontro.webp",
+ mao:"assets/img/ins-mao.webp",
+ metade:"assets/img/ins-metade.webp",
+ dois:"assets/img/ins-dois.webp",
+ cuba:"assets/img/ins-cuba.webp",
+ frio:"assets/img/ins-frio.webp",
+ mestre:"assets/img/ins-mestre.webp"
+};
+function insigniaURL(c){return INSIG[c.id];}
+
+/* --- fila de popups --- */
+var fila=[];
+function conquista(id){
+  if(S.conq.indexOf(id)>-1)return;
+  var c=conqPorId(id);if(!c)return;
+  S.conq.push(id);fila.push(c);if(fila.length===1)mostraC();
+}
+function mostraC(){
+  if(!fila.length)return;
+  var c=fila[0];
+  $("conqArte").innerHTML='<img src="'+insigniaURL(c)+'" alt="">';
+  $("conqNome").textContent=c.nome;
+  $("conq").classList.add("on");som.conq();
+  setTimeout(function(){$("conq").classList.remove("on");fila.shift();setTimeout(mostraC,500);},2900);
+}
+
+/* ===== ESTADO ===== */
+var S,sel=null;
+/* embaralha as três pastas a cada partida: a resposta certa nunca fica na mesma posição */
+function baralha(n){
+  var a=[],i,j,t;
+  for(i=0;i<n;i++)a.push(i);
+  for(i=n-1;i>0;i--){j=Math.floor(Math.random()*(i+1));t=a[i];a[i]=a[j];a[j]=t;}
+  return a;
+}
+function zera(){
+  S={i:0,h:0,e:0,s:0,seg:0,conq:[],ultima:null,porAto:[0,0,0,0,0],marcas:[],
+     ordem:DECISOES.map(function(d){return baralha(d.pastas.length);})};
+}
+/* pos = lugar na mesa (0,1,2) · devolve a alternativa sorteada para aquele lugar */
+function pastaEm(pos){ return DECISOES[S.i].pastas[S.ordem[S.i][pos]]; }
+zera();
+
+function folha(id){calaNarra();["fAbertura","fBrief","fCard","fAto","fFinal"].forEach(function(f){
+  $(f).classList.toggle("on",f===id);});
+  var el=$(id);if(el)el.scrollTop=0;}
+function semFolha(){["fAbertura","fBrief","fCard","fAto","fFinal"].forEach(function(f){$(f).classList.remove("on");});}
+
+function pinta(){
+  var t=S.h+S.e+S.s,ph=100,pe=0,ps=0;
+  if(t>0){ph=Math.round(S.h/t*100);pe=Math.round(S.e/t*100);ps=100-ph-pe;}
+  $("sH").style.width=ph+"%";$("sE").style.width=pe+"%";$("sS").style.width=ps+"%";
+  $("trilho").setAttribute("aria-valuenow",String(ph));
+  $("hudInt").textContent="Integridade "+ph+"%";
+}
+
+/* ===== BRIEFING ===== */
+function montaBrief(){
+  var d=DECISOES[S.i],a=ATOS[d.ato];
+  B.dataset.fase="brief";B.dataset.inspec="0";
+  atoFoto=d.ato+1;foto("mesa",a.grade);montaPastas(d);
+  $("hudAto").textContent="ATO "+a.n+" · "+a.nome.toUpperCase()+" · "+(S.i+1)+"/"+DECISOES.length;
+  $("briefAviso").innerHTML=d.aviso?'<div class="aviso">'+d.aviso+'</div>':"";
+  $("briefData").textContent=d.data;
+  $("briefTit").textContent=d.titulo;
+  $("briefTxt").innerHTML=d.texto.map(function(p){return '<p class="cena">'+p+'</p>';}).join("");
+  $("briefPerg").textContent=d.pergunta;
+  $("perguntaTxt").textContent=d.pergunta;
+  $("pergData").textContent=d.data;
+  $("pergTit").textContent=d.titulo;
+  $("pergTxt").innerHTML=d.texto.map(function(p){return '<p class="cena">'+p+'</p>';}).join("");
+  fechaPerg();
+  pinta();som.pag();folha("fBrief");
+  narra(d.titulo, d.data, d.texto.join(" "), d.pergunta);
+}
+function vaiMesa(){semFolha();B.dataset.fase="mesa";fechaPerg();deseleciona();som.papel();
+  narra(DECISOES[S.i].pergunta,"Três arquivos sobre a mesa. Escolha um.");}
+
+/* ===== INSPEÇÃO: o arquivo voa para o centro e inclina com o ponteiro ===== */
+var tiltAlvoX=0,tiltAlvoY=0,tiltX=0,tiltY=0,raf=null;
+function laco(){
+  tiltX+=(tiltAlvoX-tiltX)*0.07;   /* atraso: persegue o ponteiro devagar */
+  tiltY+=(tiltAlvoY-tiltY)*0.07;
+  $("objTilt").style.transform="rotateX("+tiltX.toFixed(2)+"deg) rotateY("+tiltY.toFixed(2)+"deg)";
+  var lu=$("lustro");
+  if(lu){ lu.style.setProperty("--lx",(50-tiltY*1.9).toFixed(1)+"%");
+          lu.style.setProperty("--ly",(26+tiltX*1.6).toFixed(1)+"%"); }
+  raf=requestAnimationFrame(laco);
+}
+function ponteiro(e){
+  var w=window.innerWidth,hh=window.innerHeight;
+  tiltAlvoY=((e.clientX-w/2)/(w/2))*22;
+  tiltAlvoX=-((e.clientY-hh/2)/(hh/2))*15;
+}
+function voaObjeto(html,mk,cx,cy){
+  var flut=$("objFlut"),voo=$("objVoo"),obj=$("objeto");
+  flut.style.setProperty("--mk","url("+mk+")");
+  flut.innerHTML=html;
+  var alvoX=window.innerWidth/2, alvoY=window.innerHeight*(window.innerWidth>=800?0.33:0.30);
+  obj.classList.add("on");
+  voo.style.transition="none";voo.classList.remove("pousou");
+  voo.style.transform="translate("+(cx-alvoX)+"px,"+(cy-alvoY)+"px) scale(.2)";
+  void voo.offsetWidth;
+  voo.style.transition="";voo.classList.add("pousou");
+  voo.style.transform="translate(0,-50%) scale(1)";
+  tiltAlvoX=0;tiltAlvoY=0;
+  if(!raf)raf=requestAnimationFrame(laco);
+  window.addEventListener("pointermove",ponteiro,{passive:true});
+}
+/* --- insígnia em 3D na tela final --- */
+var METAL_MIOLO={latao:[[201,169,90],[98,76,30]],bronze:[[187,130,87],[86,54,32]],
+  prata:[[191,195,200],[88,93,99]],ferro:[[118,124,130],[56,60,64]],ouro:[[220,185,93],[104,82,28]]};
+function arteInsignia(c,travada){
+  var m=travada?[[71,66,60],[32,29,26]]:(METAL_MIOLO[c.metal]||METAL_MIOLO.latao);
+  var n=9,cam="";
+  for(var k=1;k<=n;k++){
+    var t=(k-1)/(n-1);
+    var r=Math.round(m[0][0]+(m[1][0]-m[0][0])*t),
+        g=Math.round(m[0][1]+(m[1][1]-m[0][1])*t),
+        b=Math.round(m[0][2]+(m[1][2]-m[0][2])*t);
+    cam+='<i style="--k:'+k+';background:rgb('+r+','+g+','+b+')"></i>';
+  }
+  return '<div id="sombra"></div><div id="vol">'+cam+'</div>'+
+         '<div id="objFoto"><img src="'+insigniaURL(c)+'" alt="" draggable="false"'+(travada?' style="filter:grayscale(1) brightness(.38) contrast(1.1)"':'')+'></div>'+
+         '<div id="lustro"></div>';
+}
+function veInsignia(c,tem,bt){
+  var r=bt.getBoundingClientRect();
+  voaObjeto(arteInsignia(c,!tem),insigniaURL(c),r.left+r.width/2,r.top+r.height/2);
+  $("insNome").textContent=tem?c.nome:"Insígnia bloqueada";
+  $("insDesc").textContent=tem?c.desc:"Ainda não conquistada. "+c.desc;
+  $("gavIns").classList.add("on");
+  narra(tem?c.nome:"Insígnia bloqueada", c.desc);
+  setTimeout(function(){$("btInsFechar").focus();},420);
+}
+function fechaInsignia(){
+  $("gavIns").classList.remove("on");
+  $("objVoo").classList.remove("pousou");
+  $("objVoo").style.transform="translate(0,-50%) scale(.72)";
+  setTimeout(function(){$("objeto").classList.remove("on");},300);
+  window.removeEventListener("pointermove",ponteiro);
+  if(raf){cancelAnimationFrame(raf);raf=null;}
+}
+
+function inspeciona(i){
+  var d=DECISOES[S.i],p=pastaEm(i);
+  sel=i;B.dataset.inspec="1";
+  polis.forEach(function(pg,j){pg.classList.toggle("sel",j===i);pg.classList.toggle("apaga",j!==i);});
+  nums.forEach(function(n,j){n.classList.toggle("sel",j===i);n.classList.toggle("apaga",j!==i);});
+
+  /* o objeto parte de cima da pasta na mesa e pousa no centro */
+  voaObjeto(arteArquivo(i),ARQ[i],parseFloat(nums[i].dataset.cx),parseFloat(nums[i].dataset.cy));
+
+  $("gavCod").textContent=p.cod;
+  $("gavRot").textContent=p.rot;
+  var tr=$("gavTrocar");tr.innerHTML="";
+  d.pastas.forEach(function(_,j){
+    var bt=document.createElement("button");bt.type="button";bt.textContent=String(j+1);
+    bt.setAttribute("aria-label","Ver o arquivo "+(j+1));
+    if(j===i)bt.setAttribute("aria-current","true");
+    bt.addEventListener("click",function(){if(j!==sel)inspeciona(j);});
+    tr.appendChild(bt);
+  });
+  var leg=document.createElement("span");leg.textContent="trocar de arquivo";tr.appendChild(leg);
+  $("gaveta").classList.add("on");
+  som.pega();
+  narra("Arquivo "+(i+1),p.rot);
+  setTimeout(function(){$("btEscolher").focus();},480);
+}
+function deseleciona(){
+  calaNarra();sel=null;B.dataset.inspec="0";
+  polis.forEach(function(pg){pg.classList.remove("sel","apaga");});
+  nums.forEach(function(n){n.classList.remove("sel","apaga","pula");});
+  halos.forEach(function(x){x.classList.remove("on");});
+  $("gaveta").classList.remove("on");
+  var voo=$("objVoo");voo.classList.remove("pousou");voo.style.transform="translate(0,-50%) scale(.72)";
+  setTimeout(function(){if(sel===null)$("objeto").classList.remove("on");},300);
+  window.removeEventListener("pointermove",ponteiro);
+  if(raf){cancelAnimationFrame(raf);raf=null;}
+}
+function escondeObjeto(){
+  $("objeto").classList.remove("on");$("objVoo").classList.remove("pousou");
+  window.removeEventListener("pointermove",ponteiro);
+  if(raf){cancelAnimationFrame(raf);raf=null;}
+}
+
+/* ===== CONFIRMAR ===== */
+function confirma(){
+  if(sel===null)return;
+  var d=DECISOES[S.i],p=pastaEm(sel),ok=p.tipo==="h";
+  S.ultima=p;S[p.tipo]+=1;
+  if(p.marca)S.marcas.push(p.marca);
+  if(ok){S.seg++;S.porAto[d.ato]++;}else S.seg=0;
+  $("gaveta").classList.remove("on");escondeObjeto();
+  $("carimbo").className=ok?"ok":"";
+  $("carimbo").textContent=ok?"AUTÊNTICO":"FALSIFICAÇÃO";
+  $("seloFrase").textContent=p.frase;
+  $("veu").classList.add("on");
+  void $("carimbo").offsetWidth;$("carimbo").classList.add("bate");
+  som.carimbo(ok);
+  narra(ok?"Autêntico":"Falsificação", p.frase);
+  setTimeout(function(){$("btSelo").focus();},520);
+  if(ok){
+    conquista("selo");
+    if(S.i===0)conquista("munique");
+    if(S.i===6)conquista("codigo");
+    if(S.seg>=3){conquista("olho");if(S.e+S.s>0)conquista("reencontro");}
+    if(S.seg>=6)conquista("mao");
+    if(S.h>=5)conquista("cinco");
+    if(S.h>=8)conquista("metade");
+  }
+  if(p.marca==="cuba-invasao")conquista("cuba");
+}
+
+/* ===== CARD ===== */
+function montaCard(){
+  var d=DECISOES[S.i],p=S.ultima;
+  B.dataset.fase="card";B.dataset.inspec="0";
+  polis.forEach(function(pg){pg.classList.remove("sel","apaga");});
+  nums.forEach(function(n){n.classList.remove("sel","apaga");});
+  $("cTit").textContent=d.card.titulo;$("cCorpo").textContent=d.card.corpo;
+  $("cCur").textContent="Curiosidade: "+d.card.cur;$("cFonte").textContent=d.card.fonte;
+  if(p.tipo==="h")$("cMudou").innerHTML="";
+  else{var cor=p.tipo==="e"?"var(--le)":"var(--ls)";
+    $("cMudou").innerHTML='<div style="background:rgba(39,32,21,.85);border-radius:10px;padding:14px;margin-top:16px;border-left:3px solid '+cor+'">'+
+      '<span class="rot" style="display:block;margin-bottom:8px">O que a falsificação propunha</span>'+
+      '<p class="cena" style="margin:0;font-size:16.5px">'+p.rot+'. Esta versão nunca aconteceu — mas se apoia em algo que foi de fato discutido na época, e é por isso que ela convence.</p></div>';}
+  var ultimo=S.i===DECISOES.length-1, fimAto=ultimo||DECISOES[S.i+1].ato!==d.ato;
+  $("btCard").textContent=ultimo?"Fechar o acervo":(fimAto?"Encerrar o Ato "+ATOS[d.ato].n:"Próxima pasta");
+  som.pag();folha("fCard");
+  narra("O que realmente aconteceu.", d.card.titulo, d.card.corpo, "Curiosidade: "+d.card.cur);
+}
+
+/* ===== ATO ===== */
+function montaAto(ia){
+  var a=ATOS[ia];B.dataset.fase="ato";atoFoto=ia+1;foto("mesa","none");
+  $("aSelo").textContent="Fim do Ato "+a.n+" · "+a.periodo;
+  $("aTit").textContent=a.nome;$("aTxt").textContent=a.fim;
+  $("aPlacar").textContent="Neste ato você validou "+S.porAto[ia]+" de 3 documentos autênticos. Acervo em "+
+    Math.round(S.h/(S.h+S.e+S.s)*100)+"% de integridade.";
+  if(S.porAto[ia]===3){conquista("ato");
+    var limpos=0;S.porAto.forEach(function(v){if(v===3)limpos++;});
+    if(limpos>=2)conquista("dois");}
+  if(ia===3)conquista("travessia");
+  $("btAto").textContent="Abrir o Ato "+ATOS[ia+1].n+" · "+ATOS[ia+1].nome;
+  som.ato();folha("fAto");
+  narra("Fim do Ato "+a.n+", "+a.nome, a.fim, $("aPlacar").textContent);
+}
+
+/* ===== FINAL ===== */
+function montaFinal(){
+  B.dataset.fase="final";fechaInsignia();escondeObjeto();$("contornos").innerHTML="";$("numeros").innerHTML="";polis=[];nums=[];
+  foto("key","saturate(.5) contrast(1.12) brightness(.78)");
+  var ac_=S.h,pct=Math.round(ac_/DECISOES.length*100),cuba=S.marcas.indexOf("cuba-invasao")>-1,f;
+  conquista("travessia");
+  if(S.porAto[4]===3){conquista("frio");
+    var lp=0;S.porAto.forEach(function(v){if(v===3)lp++;});
+    conquista("ato");if(lp>=2)conquista("dois");}
+  if(ac_===DECISOES.length){conquista("mestre");
+    f={fx:"ACERVO RESTAURADO",c:"var(--lh)",t:"O Mundo que Conhecemos",
+      a:"Não restou uma única falsificação. A guerra termina em 1945, a ONU nasce, a Guerra Fria se encerra com a queda do Muro em 1989 e a URSS deixa de existir em 1991. O século que você entrega é o século que de fato existiu.",
+      b:"Este é o único final em que o Arquivista vence. Ele não era inevitável: foi construído documento por documento.",
+      n:"Final A, de quatro. É o único que não é uma derrota.",s:"vit"};
+  } else if(cuba&&ac_<=9&&Math.abs(S.e-S.s)<=2){
+    f={fx:"ACERVO PERDIDO",c:"var(--ld)",t:"O Último Outubro",
+      a:"Nenhuma das duas falsificações venceu: o acervo desmoronou dos dois lados ao mesmo tempo, e a pasta de outubro de 1962 selou o resto. No Caribe, um submarino soviético cercado prepara um torpedo nuclear, e dessa vez não há um terceiro oficial para dizer não.",
+      b:"Na história real, Vasili Arkhipov recusou o disparo e a crise terminou no dia 28. Em 1963 nasceram a linha direta entre Washington e Moscou e o tratado que proibiu testes nucleares na atmosfera. Às vezes o mundo inteiro depende de uma única pessoa dizendo não.",
+      n:"Final D, o secreto. Ele só aparece quando o acervo desmorona dos dois lados ao mesmo tempo e a última pasta aberta é a invasão de Cuba.",s:"der"};
+  } else if(S.e>=S.s){
+    f={fx:"ACERVO FALSIFICADO",c:"var(--le)",t:"A Longa Noite",
+      a:"As falsificações do Eixo venceram. No acervo que você entrega, a Alemanha domina a Europa do Atlântico aos Urais e o Japão governa o Leste da Ásia. Não há tribunal de Nuremberg, não há libertação dos campos.",
+      b:"Nada disso foi uma escolha sua. Você não optou por esse mundo: você deixou de reconhecer os documentos verdadeiros, e o acervo passou a contar a história de quem o adulterou.",
+      n:"Final B, uma derrota. Na história real o regime nazista foi derrotado em 1945, e cerca de 6 milhões de judeus foram assassinados no Holocausto. Fonte: United States Holocaust Memorial Museum.",s:"der"};
+  } else {
+    f={fx:"ACERVO FALSIFICADO",c:"var(--ls)",t:"O Século Vermelho",
+      a:"As falsificações soviéticas venceram. No acervo que você entrega, a URSS chega ao Atlântico, a Europa inteira fica sob sua influência e os EUA se fecham no isolacionismo. Há escola e saúde para todos, e há presos políticos em campos de trabalho.",
+      b:"Nada disso foi uma escolha sua. Você não optou por esse mundo: você deixou de reconhecer os documentos verdadeiros, e o acervo passou a contar a história de quem o adulterou.",
+      n:"Final C, uma derrota. Na história real a URSS se dissolveu em 1991, e o sistema de campos de trabalho forçado aprisionou milhões de pessoas entre os anos 1930 e 1950. Fonte: Encyclopaedia Britannica.",s:"der"};
+  }
+  $("xFaixa").textContent=f.fx;$("xFaixa").style.color=f.c;
+  $("xTit").textContent=f.t;$("xPct").textContent=pct+"%";$("xPct").style.color=f.c;
+  $("xT1").textContent=f.a;$("xT2").textContent=f.b;
+  $("xA").textContent=ac_+"/"+DECISOES.length;$("xE").textContent=String(S.e);$("xS").textContent=String(S.s);
+  $("xAtos").innerHTML=ATOS.map(function(a,i){return '<li><span>Ato '+a.n+' · '+a.nome+'</span><span style="color:'+
+    (S.porAto[i]===3?"var(--lh)":"var(--tenue)")+'">'+S.porAto[i]+'/3</span></li>';}).join("");
+  $("xConqN").textContent=S.conq.length+" de "+CONQ.length;
+  var gal=$("galeria");gal.innerHTML="";
+  CONQ.forEach(function(c){
+    var tem=S.conq.indexOf(c.id)>-1;
+    var bt=document.createElement("button");
+    bt.type="button";bt.className="ins"+(tem?"":" travada");
+    bt.setAttribute("aria-label",(tem?"Insígnia conquistada: ":"Insígnia bloqueada: ")+c.nome);
+    bt.innerHTML='<img src="'+insigniaURL(c)+'" alt=""><em>'+(tem?c.nome:"Bloqueada")+'</em>';
+    bt.addEventListener("click",function(){veInsignia(c,tem,bt);});
+    gal.appendChild(bt);
+  });
+  $("xNota").textContent=f.n;
+  paraAmb();som[f.s]();folha("fFinal");
+  narra(f.fx, f.t, pct+" por cento de documentos autênticos", f.a, f.b);
+}
+
+/* ===== FLUXO ===== */
+function avanca(){
+  var a=DECISOES[S.i].ato;
+  if(S.i===DECISOES.length-1){montaFinal();return;}
+  if(DECISOES[S.i+1].ato!==a){montaAto(a);return;}
+  S.i++;montaBrief();
+}
+$("btComecar").addEventListener("click",function(){ac();iniAmb();som.pag();zera();montaBrief();});
+$("btVerMesa").addEventListener("click",vaiMesa);
+$("btVoltar").addEventListener("click",function(){deseleciona();som.papel();});
+$("btEscolher").addEventListener("click",confirma);
+$("btSelo").addEventListener("click",function(){$("veu").classList.remove("on");montaCard();});
+$("btCard").addEventListener("click",avanca);
+$("btAto").addEventListener("click",function(){S.i++;montaBrief();});
+$("btInsFechar").addEventListener("click",fechaInsignia);
+$("btRe").addEventListener("click",function(){zera();montaBrief();});
+function abrePerg(){B.dataset.lendo="1";$("pergCard").classList.add("aberto");$("pergFull").hidden=false;
+  $("perguntaBt").setAttribute("aria-expanded","true");$("pergDica").innerHTML='<b aria-hidden="true">&#9652;</b> Fechar o contexto';som.pag();}
+function fechaPerg(){B.dataset.lendo="0";$("pergCard").classList.remove("aberto");$("pergFull").hidden=true;
+  if(sel!==null&&B.dataset.fase==="mesa")$("gaveta").classList.add("on");
+  $("perguntaBt").setAttribute("aria-expanded","false");$("pergDica").innerHTML='<b aria-hidden="true">&#9662;</b> Ler o contexto';}
+$("perguntaBt").addEventListener("click",function(){
+  if($("pergCard").classList.contains("aberto"))fechaPerg();else abrePerg();});
+$("btFecharPerg").addEventListener("click",function(){fechaPerg();som.papel();});
+$("btBrief").addEventListener("click",function(){
+  if(B.dataset.fase==="mesa"){ if($("pergCard").classList.contains("aberto"))fechaPerg();else abrePerg(); }
+  else if(B.dataset.fase==="brief"){vaiMesa();}
+});
+if(temVideo()){
+  $("btMov").hidden=false;
+  try{ if(localStorage.getItem("pr-mov")==="0"){videoOn=false;$("btMov").setAttribute("aria-pressed","false");} }catch(e){}
+  $("btMov").addEventListener("click",function(){
+    videoOn=!videoOn;
+    this.setAttribute("aria-pressed",videoOn?"true":"false");
+    if(videoOn)tocaVideo(); else paraVideo();
+    try{localStorage.setItem("pr-mov",videoOn?"1":"0");}catch(e){}
+  });
+}
+$("btNarra").addEventListener("click",function(){
+  narraOn=!narraOn;
+  this.setAttribute("aria-pressed",narraOn?"true":"false");
+  if(!narraOn){calaNarra();}
+  else{ achaVoz(); narra("Narração ligada."); }
+  try{localStorage.setItem("pr-narra",narraOn?"1":"0");}catch(e){}
+});
+$("btSom").addEventListener("click",function(){somOn=!somOn;
+  this.setAttribute("aria-pressed",somOn?"true":"false");this.innerHTML=somOn?"&#9834;":"&#10005;";
+  if(somOn){ if(B.dataset.fase!=="abertura"&&B.dataset.fase!=="final")tocaAmb(atoFoto); } else paraAmb();
+  try{localStorage.setItem("pr-som",somOn?"1":"0");}catch(e){}});
+document.addEventListener("keydown",function(e){
+  if(B.dataset.fase!=="mesa")return;
+  if(e.key==="Escape"&&sel!==null){deseleciona();return;}
+  if(e.key==="Enter"&&sel!==null){confirma();return;}
+  var n=parseInt(e.key,10);if(n>=1&&n<=3&&polis[n-1])inspeciona(n-1);
+});
+try{if(localStorage.getItem("pr-narra")==="1"){narraOn=true;$("btNarra").setAttribute("aria-pressed","true");}}catch(e){}
+if(!temVoz){$("btNarra").disabled=true;$("btNarra").style.opacity=".4";$("btNarra").title="Narração indisponível neste navegador";}
+try{if(localStorage.getItem("pr-som")==="0"){somOn=false;$("btSom").setAttribute("aria-pressed","false");$("btSom").innerHTML="&#10005;";}}catch(e){}
+foto("key","saturate(1.02)");
+})();
+</script>
+</body>
+</html>
