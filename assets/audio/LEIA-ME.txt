@@ -1,2 +1,5 @@
-Coloque aqui o ambiente de cada ato: amb-ato1.mp3 ... amb-ato5.mp3
-60 a 90 s, loop, mono, 96 kbps, sem musica e sem voz.
+trilha.mp3            musica continua do jogo todo, em loop
+final-a.mp3 ... final-d.mp3   uma peca por final, sem loop
+amb-ato1.mp3 ... amb-ato5.mp3 ambiente de cada sala, em loop (opcional)
+
+O que faltar simplesmente nao toca, sem erro.

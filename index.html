@@ -333,6 +333,39 @@ body[data-fase="mesa"] #ferr{top:auto;bottom:calc(var(--sb) + 10px);right:10px}
 #ferr{transition:opacity .25s}
 body[data-inspec="1"] #ferr,body[data-lendo="1"] #ferr{opacity:0;pointer-events:none}
 
+/* ============ REVELAÇÃO DO FINAL ============ */
+#fFinal{background:linear-gradient(rgba(8,6,4,.1) 0%,rgba(8,6,4,.3) 38%,rgba(8,6,4,.86) 68%,rgba(8,6,4,.97) 100%);
+  backdrop-filter:none;-webkit-backdrop-filter:none}
+.heroFinal{min-height:66vh;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;
+  text-align:center;padding-bottom:16px}
+@media(max-aspect-ratio:9/10){.heroFinal{min-height:58vh}}
+.heroFinal .marca,.heroFinal .pct{text-shadow:0 3px 24px rgba(0,0,0,.95),0 0 60px rgba(0,0,0,.7)}
+.rv{opacity:0;transform:translateY(14px);transition:opacity 1s ease-out,transform 1s ease-out}
+.rv.on{opacity:1;transform:none}
+#xFaixa{opacity:0;font-size:17px;padding:8px 18px;border-width:3px}
+#xFaixa.bateF{animation:bate .55s cubic-bezier(.2,.9,.3,1.25) forwards}
+body[data-final="A"] #xFaixa{color:var(--lh);background:rgba(178,195,116,.1)}
+body[data-final="B"] #xFaixa,body[data-final="C"] #xFaixa,body[data-final="D"] #xFaixa{
+  color:#e5583f;background:rgba(229,88,63,.12)}
+#xSelo{margin:2px 0 8px;font-size:12px;letter-spacing:1.6px}
+body[data-final="A"] #xSelo{color:var(--lh)}
+body[data-final="B"] #xSelo,body[data-final="C"] #xSelo,body[data-final="D"] #xSelo{color:#e5583f}
+#marcaFinal{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 2s ease-out;
+  background-repeat:repeat;background-size:560px 280px}
+body[data-fase="final"][data-final="B"] #marcaFinal,
+body[data-fase="final"][data-final="C"] #marcaFinal,
+body[data-fase="final"][data-final="D"] #marcaFinal{opacity:.11}
+body[data-fase="final"][data-final="A"] #marcaFinal{opacity:1;
+  background:radial-gradient(62% 46% at 50% 28%,rgba(255,214,140,.2) 0%,rgba(255,214,140,0) 72%)}
+#xFinais{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
+@media(min-width:620px){#xFinais{grid-template-columns:repeat(4,1fr)}}
+.fin{border:1px solid var(--linha);border-radius:10px;padding:10px 11px;background:rgba(39,32,21,.7)}
+.fin b{display:block;font-family:var(--d);font-weight:400;font-size:13.5px;line-height:17px;margin:4px 0 5px}
+.fin em{font-style:normal;font-size:10.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.fin.ok em{color:var(--lh)} .fin.falso em{color:#e5583f}
+.fin.atual{border-color:var(--ambar);box-shadow:0 0 0 1px var(--ambar) inset}
+.fin.nunca{opacity:.45}
+
 /* ============ FINAL / PLACAR ============ */
 #galeria{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 @media(min-width:620px){#galeria{grid-template-columns:repeat(4,1fr)}}
@@ -378,6 +411,7 @@ body[data-inspec="1"] #ferr,body[data-lendo="1"] #ferr{opacity:0;pointer-events:
   <div id="desfoque"></div>
   <div id="veuPalco"></div>
   <div id="vinheta"></div>
+  <div id="marcaFinal"></div>
   <div id="pastas">
     <svg id="contornos" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true"></svg>
     <div id="numeros"></div>
@@ -499,15 +533,18 @@ body[data-inspec="1"] #ferr,body[data-lendo="1"] #ferr{opacity:0;pointer-events:
 
 <!-- FINAL -->
 <div class="folha" id="fFinal"><div class="col" style="padding-top:20px">
-  <div class="centro">
+  <div class="heroFinal">
     <span class="faixa" id="xFaixa"></span>
-    <h2 class="marca" id="xTit" style="font-size:34px"></h2>
-    <p class="rot">Documentos autênticos validados</p>
-    <div class="pct" id="xPct">0%</div>
+    <p class="rot rv" id="xSelo"></p>
+    <h2 class="marca rv" id="xTit" style="font-size:36px"></h2>
+    <p class="rot rv" id="xRotPct" style="margin-top:6px">Documentos autênticos validados</p>
+    <div class="pct rv" id="xPct">0%</div>
   </div>
-  <div class="painel">
+  <div class="painel rv">
     <p class="cena" id="xT1"></p>
     <p class="cena" id="xT2" style="color:var(--suave)"></p>
+    <p class="rot" style="margin-top:20px">Finais descobertos <span id="xFinN" style="color:var(--ambar)"></span></p>
+    <div id="xFinais"></div>
     <div class="placar">
       <div><span class="rot">Autênticos</span><b id="xA" style="color:var(--lh)"></b></div>
       <div><span class="rot">Falsif. Eixo</span><b id="xE" style="color:var(--le)"></b></div>
@@ -519,10 +556,10 @@ body[data-inspec="1"] #ferr,body[data-lendo="1"] #ferr{opacity:0;pointer-events:
     <p class="meta" style="margin:4px 0 12px">Toque em uma insígnia para examinar.</p>
     <div id="galeria"></div>
   </div>
-  <div class="painel" style="margin-top:14px;background:rgba(39,32,21,.8)">
+  <div class="painel rv" style="margin-top:14px;background:rgba(39,32,21,.8)">
     <p class="meta" id="xNota" style="margin:0"></p>
   </div>
-  <button class="btn" id="btRe">Recomeçar o arquivo</button>
+  <button class="btn rv" id="btRe">Recomeçar o arquivo</button>
 </div></div>
 
 <script>
@@ -863,6 +900,23 @@ function movimentoOk(){
   return videoOn && temVideo() && !vertical()
       && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
+/* ===== MÚSICA: uma trilha contínua para o jogo todo e uma peça por final ===== */
+var elTri=null, elFim=null;
+function mkAudio(loop){var a=document.createElement("audio");a.loop=loop;a.preload="auto";
+  a.setAttribute("aria-hidden","true");document.body.appendChild(a);return a;}
+function fadeEl(el,to,ms,fim){ if(!el)return; clearInterval(el._t);
+  var de=el.volume,t0=Date.now();
+  el._t=setInterval(function(){var k=Math.min(1,(Date.now()-t0)/ms);
+    el.volume=Math.max(0,Math.min(1,de+(to-de)*k)); if(k>=1){clearInterval(el._t); if(fim)fim();}},40);}
+function tocaTrilha(){ if(!TRILHA||!somOn)return;
+  if(!elTri){elTri=mkAudio(true);elTri.src=TRILHA;elTri.volume=0;}
+  var p=elTri.play(); if(p&&p.catch)p.catch(function(){}); fadeEl(elTri,0.35,2500);}
+function paraTrilha(ms){ if(!elTri)return; fadeEl(elTri,0,ms||1500,function(){try{elTri.pause();}catch(e){}});}
+function tocaMusFinal(id){ var u=MUS_FINAL[id]; if(!u||!somOn)return false;
+  if(!elFim)elFim=mkAudio(false); elFim.src=u; elFim.volume=0;
+  var p=elFim.play(); if(p&&p.catch)p.catch(function(){}); fadeEl(elFim,0.55,1800); return true;}
+function paraMusFinal(){ if(elFim)fadeEl(elFim,0,800,function(){try{elFim.pause();}catch(e){}});}
+
 /* ===== AMBIENTE: um loop longo por ato, independente do vídeo ===== */
 var AMB={
  "1":"assets/audio/amb-ato1.mp3",
@@ -936,8 +990,36 @@ function tocaVideo(){
   var p=v.play(); if(p&&p.catch)p.catch(function(){paraVideo();});
 }
 function mesaAtual(){return MESAS[atoFoto][vertical()?"v":"h"];}
-function urlFoto(tipo){return tipo==="key"?(vertical()?KEYV:KEYH):mesaAtual().url;}
+/* ===== FINAIS: fundo, trilha e música própria. Vazios aqui; preenchidos na versão hospedada ===== */
+var FUNDOS_FINAL={
+ A:{h:"assets/img/final-a-h.webp",v:"assets/img/final-a-v.webp"},
+ B:{h:"assets/img/final-b-h.webp",v:"assets/img/final-b-v.webp"},
+ C:{h:"assets/img/final-c-h.webp",v:"assets/img/final-c-v.webp"},
+ D:{h:"assets/img/final-d-h.webp",v:"assets/img/final-d-v.webp"}
+},
+ TRILHA="assets/audio/trilha.mp3",
+ MUS_FINAL={A:"assets/audio/final-a.mp3", B:"assets/audio/final-b.mp3", C:"assets/audio/final-c.mp3", D:"assets/audio/final-d.mp3"};
+/* o que não existir cai no fundo e no som provisórios, sem erro */
+var GRADE_FINAL={A:"sepia(.25) saturate(.95) brightness(.92)",
+  B:"grayscale(.9) contrast(1.18) brightness(.55)",
+  C:"sepia(.5) hue-rotate(-28deg) saturate(1.7) contrast(1.15) brightness(.6)",
+  D:"grayscale(1) contrast(.7) brightness(1.2)"};
+var finalAtual=null, finalOk={};
+function urlFoto(tipo){
+  if(tipo==="final"){var k=finalAtual+(vertical()?"v":"h"); if(finalOk[k])return finalOk[k]; tipo="key";}
+  return tipo==="key"?(vertical()?KEYV:KEYH):mesaAtual().url;}
+function fundoFinal(id){
+  finalAtual=id; foto("final");
+  ["h","v"].forEach(function(o){
+    var u=FUNDOS_FINAL[id]&&FUNDOS_FINAL[id][o];
+    if(!u||finalOk[id+o])return;
+    var im=new Image();
+    im.onload=function(){finalOk[id+o]=u; if(B.dataset.fase==="final"&&finalAtual===id)foto("final");};
+    im.src=u;
+  });
+}
 function foto(tipo,grade){
+  if(tipo==="final") grade=finalOk[finalAtual+(vertical()?"v":"h")]?"none":GRADE_FINAL[finalAtual];
   fotoAtual={tipo:tipo,grade:grade||"none"};
   B.dataset.ato=(tipo==="mesa")?String(atoFoto):"0";
   if(tipo==="mesa"){tocaVideo();tocaAmb(atoFoto);} else {paraVideo();}
@@ -1322,7 +1404,6 @@ function montaAto(ia){
 /* ===== FINAL ===== */
 function montaFinal(){
   B.dataset.fase="final";fechaInsignia();escondeObjeto();$("contornos").innerHTML="";$("numeros").innerHTML="";polis=[];nums=[];
-  foto("key","saturate(.5) contrast(1.12) brightness(.78)");
   var ac_=S.h,pct=Math.round(ac_/DECISOES.length*100),cuba=S.marcas.indexOf("cuba-invasao")>-1,f;
   conquista("travessia");
   if(S.porAto[4]===3){conquista("frio");
@@ -1349,8 +1430,20 @@ function montaFinal(){
       b:"Nada disso foi uma escolha sua. Você não optou por esse mundo: você deixou de reconhecer os documentos verdadeiros, e o acervo passou a contar a história de quem o adulterou.",
       n:"Final C, uma derrota. Na história real a URSS se dissolveu em 1991, e o sistema de campos de trabalho forçado aprisionou milhões de pessoas entre os anos 1930 e 1950. Fonte: Encyclopaedia Britannica.",s:"der"};
   }
-  $("xFaixa").textContent=f.fx;$("xFaixa").style.color=f.c;
-  $("xTit").textContent=f.t;$("xPct").textContent=pct+"%";$("xPct").style.color=f.c;
+  var id = ac_===DECISOES.length?"A":(f.t==="O Último Outubro"?"D":(f.t==="A Longa Noite"?"B":"C"));
+  B.dataset.final=id;
+  fundoFinal(id);
+  $("marcaFinal").style.backgroundImage = id==="A" ? "" :
+    'url("data:image/svg+xml;charset=utf-8,'+encodeURIComponent(
+    "<svg xmlns='http://www.w3.org/2000/svg' width='560' height='280'>"+
+    "<text x='280' y='150' text-anchor='middle' transform='rotate(-18 280 140)' "+
+    "font-family='Courier New,monospace' font-size='52' letter-spacing='8' fill='none' "+
+    "stroke='#e5583f' stroke-width='2'>"+(id==="D"?"PERDIDO":"FALSIFICADO")+"</text></svg>")+'")';
+  $("xSelo").textContent = id==="A" ? "Final A de 4 · A única versão autêntica"
+    : (id==="D" ? "Final D · secreto · Uma história que nunca existiu"
+    : "Final "+id+" de 4 · Uma história que nunca existiu");
+  $("xFaixa").textContent=f.fx;$("xFaixa").style.color="";
+  $("xTit").textContent=f.t;$("xPct").textContent="0%";$("xPct").style.color=f.c;
   $("xT1").textContent=f.a;$("xT2").textContent=f.b;
   $("xA").textContent=ac_+"/"+DECISOES.length;$("xE").textContent=String(S.e);$("xS").textContent=String(S.s);
   $("xAtos").innerHTML=ATOS.map(function(a,i){return '<li><span>Ato '+a.n+' · '+a.nome+'</span><span style="color:'+
@@ -1367,9 +1460,39 @@ function montaFinal(){
     gal.appendChild(bt);
   });
   $("xNota").textContent=f.n;
-  paraAmb();som[f.s]();folha("fFinal");
-  narra(f.fx, f.t, pct+" por cento de documentos autênticos", f.a, f.b);
+
+  var FINAIS=[["A","O Mundo que Conhecemos",true],["B","A Longa Noite",false],
+              ["C","O Século Vermelho",false],["D","O Último Outubro",false]];
+  var vistos=[]; try{vistos=JSON.parse(localStorage.getItem("pr-finais")||"[]");}catch(e){}
+  if(vistos.indexOf(id)<0)vistos.push(id);
+  try{localStorage.setItem("pr-finais",JSON.stringify(vistos));}catch(e){}
+  $("xFinN").textContent=vistos.length+" de 4";
+  $("xFinais").innerHTML=FINAIS.map(function(x){
+    var v=vistos.indexOf(x[0])>-1;
+    return '<div class="fin '+(x[2]?'ok':'falso')+(x[0]===id?' atual':'')+(v?'':' nunca')+'">'+
+      '<span class="rot">Final '+x[0]+(x[0]===id?' · este':'')+'</span>'+
+      '<b>'+(v?x[1]:(x[0]==="D"?"Final secreto":"Ainda não visto"))+'</b>'+
+      '<em>'+(x[2]?'Autêntico':'Falsificação')+'</em></div>';}).join("");
+
+  /* revelação em tempos: escuro, carimbo, título, contagem, resto */
+  tmrsF.forEach(clearTimeout); tmrsF=[];
+  var rvs=$("fFinal").querySelectorAll(".rv");
+  Array.prototype.forEach.call(rvs,function(e){e.classList.remove("on");});
+  $("xFaixa").classList.remove("bateF");
+  paraAmb(); paraTrilha(1800);
+  folha("fFinal");
+  tmrsF.push(setTimeout(function(){ $("xFaixa").classList.add("bateF"); som.carimbo(id==="A"); },800));
+  tmrsF.push(setTimeout(function(){ $("xSelo").classList.add("on"); $("xTit").classList.add("on");
+    if(!tocaMusFinal(id))som[f.s]();
+    narra(f.fx, f.t, pct+" por cento de documentos autênticos", f.a, f.b); },1600));
+  tmrsF.push(setTimeout(function(){ $("xRotPct").classList.add("on"); $("xPct").classList.add("on"); contaPct(pct,1400); },2400));
+  tmrsF.push(setTimeout(function(){ Array.prototype.forEach.call(rvs,function(e){e.classList.add("on");}); },4000));
 }
+var tmrsF=[];
+function contaPct(alvo,ms){var t0=performance.now();
+  function q(t){var k=Math.min(1,(t-t0)/ms);k=1-Math.pow(1-k,3);
+    $("xPct").textContent=Math.round(alvo*k)+"%"; if(k<1)requestAnimationFrame(q);}
+  requestAnimationFrame(q);}
 
 /* ===== FLUXO ===== */
 function avanca(){
@@ -1378,7 +1501,7 @@ function avanca(){
   if(DECISOES[S.i+1].ato!==a){montaAto(a);return;}
   S.i++;montaBrief();
 }
-$("btComecar").addEventListener("click",function(){ac();iniAmb();som.pag();zera();montaBrief();});
+$("btComecar").addEventListener("click",function(){ac();iniAmb();som.pag();zera();montaBrief();tocaTrilha();});
 $("btVerMesa").addEventListener("click",vaiMesa);
 $("btVoltar").addEventListener("click",function(){deseleciona();som.papel();});
 $("btEscolher").addEventListener("click",confirma);
@@ -1386,7 +1509,7 @@ $("btSelo").addEventListener("click",function(){$("veu").classList.remove("on");
 $("btCard").addEventListener("click",avanca);
 $("btAto").addEventListener("click",function(){S.i++;montaBrief();});
 $("btInsFechar").addEventListener("click",fechaInsignia);
-$("btRe").addEventListener("click",function(){zera();montaBrief();});
+$("btRe").addEventListener("click",function(){tmrsF.forEach(clearTimeout);tmrsF=[];B.dataset.final="";finalAtual=null;paraMusFinal();zera();montaBrief();tocaTrilha();});
 function abrePerg(){B.dataset.lendo="1";$("pergCard").classList.add("aberto");$("pergFull").hidden=false;
   $("perguntaBt").setAttribute("aria-expanded","true");$("pergDica").innerHTML='<b aria-hidden="true">&#9652;</b> Fechar o contexto';som.pag();}
 function fechaPerg(){B.dataset.lendo="0";$("pergCard").classList.remove("aberto");$("pergFull").hidden=true;
@@ -1418,7 +1541,8 @@ $("btNarra").addEventListener("click",function(){
 });
 $("btSom").addEventListener("click",function(){somOn=!somOn;
   this.setAttribute("aria-pressed",somOn?"true":"false");this.innerHTML=somOn?"&#9834;":"&#10005;";
-  if(somOn){ if(B.dataset.fase!=="abertura"&&B.dataset.fase!=="final")tocaAmb(atoFoto); } else paraAmb();
+  if(somOn){ if(B.dataset.fase!=="abertura"&&B.dataset.fase!=="final"){tocaAmb(atoFoto);tocaTrilha();} }
+  else {paraAmb();paraTrilha(400);paraMusFinal();}
   try{localStorage.setItem("pr-som",somOn?"1":"0");}catch(e){}});
 document.addEventListener("keydown",function(e){
   if(B.dataset.fase!=="mesa")return;
