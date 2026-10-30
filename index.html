@@ -444,7 +444,6 @@ body[data-fase="final"][data-final="A"] #marcaFinal{opacity:1;
 <div id="ferr">
   <button class="ic" id="btSom" aria-pressed="true" aria-label="Ligar ou desligar o som">&#9834;</button>
   <button class="ic" id="btMov" aria-pressed="true" aria-label="Ligar ou desligar o fundo animado" hidden>&#9655;</button>
-  <button class="ic" id="btNarra" aria-pressed="false" aria-label="Ligar ou desligar a narração">&#128266;</button>
   <button class="ic" id="btBrief" aria-label="Reler o contexto desta decisão">&#8505;</button>
 </div>
 
@@ -773,6 +772,18 @@ var DECISOES = [
   fonte:"Fontes: Stiftung Berliner Mauer; Encyclopaedia Britannica."}}
 ];
 
+/* A pasta de "invadir Cuba" só revela o fio que leva ao Final D quando o acervo
+   já está quase empatado entre o Eixo e a URSS ao chegar nesta decisão — do
+   contrário, a mesma escolha aparece como mais uma falsificação comum do Eixo,
+   sem o gancho do submarino. A troca em tempo real acontece no shell3.html. */
+var CUBA_OCULTA = DECISOES[13].pastas[2];
+var CUBA_PADRAO = {
+  cod:"CUB-C · 03 fls.",
+  rot:"Os EUA bombardeiam as bases e invadem Cuba",
+  tipo:"e",
+  frase:"A falsificação entra no acervo. A invasão vira uma guerra maior, e o Caribe pega fogo pelos dez anos seguintes."
+};
+
 </script>
 <script>
 (function(){
@@ -860,24 +871,13 @@ function $(i){return document.getElementById(i);}
 /* ===== NARRAÇÃO =====
    Hoje usa a voz sintética do navegador. Quando os áudios gravados chegarem,
    basta trocar o corpo de narra() por um <audio> apontando para o id do trecho. */
-var narraOn=false, vozPt=null, temVoz=!!(window.speechSynthesis&&window.SpeechSynthesisUtterance);
-function achaVoz(){
-  if(!temVoz)return;
-  var vs=speechSynthesis.getVoices()||[];
-  vozPt = vs.filter(function(v){return /^pt[-_]BR/i.test(v.lang);})[0]
-       || vs.filter(function(v){return /^pt/i.test(v.lang);})[0] || null;
-}
-if(temVoz){ achaVoz(); speechSynthesis.onvoiceschanged=achaVoz; }
-function calaNarra(){ if(temVoz)speechSynthesis.cancel(); }
-function narra(){
-  if(!narraOn||!temVoz)return;
-  var txt=Array.prototype.slice.call(arguments).filter(Boolean).join(". ").replace(/\.\.+/g,".");
-  if(!txt)return;
-  speechSynthesis.cancel();
-  var u=new SpeechSynthesisUtterance(txt);
-  u.lang="pt-BR"; if(vozPt)u.voice=vozPt; u.rate=.98; u.pitch=1; u.volume=1;
-  speechSynthesis.speak(u);
-}
+/* Narração: sem voz sintética por ora (tirada a pedido, para não concorrer
+   com os efeitos e a música enquanto não há áudio gravado). As ~10 chamadas
+   de narra(...) continuam no fluxo do jogo, mudas, prontas para apontar
+   direto para os arquivos de voz quando a narração gravada estiver pronta —
+   ver guia-narracoes.md. */
+function calaNarra(){}
+function narra(){}
 var B=document.body;
 
 /* ===== FOTO + RECORTES ===== */
@@ -1187,10 +1187,22 @@ function baralha(n){
   for(i=n-1;i>0;i--){j=Math.floor(Math.random()*(i+1));t=a[i];a[i]=a[j];a[j]=t;}
   return a;
 }
+/* total de alternativas de cada falsificação no jogo inteiro — calculado dos dados,
+   nunca fixo, para a comparação entre Eixo e URSS continuar justa mesmo se o
+   roteiro mudar. Sem isso, decisões com mais opções de um tipo (ex.: Dunquerque,
+   que só tem alternativas do Eixo) inclinavam o jogo para aquele final sozinhas. */
+var MAX_E=0, MAX_S=0;
+DECISOES.forEach(function(d){
+  MAX_E += d.pastas.filter(function(p){return p.tipo==="e";}).length;
+  MAX_S += d.pastas.filter(function(p){return p.tipo==="s";}).length;
+});
 function zera(){
   S={i:0,h:0,e:0,s:0,seg:0,conq:[],ultima:null,porAto:[0,0,0,0,0],marcas:[],
      ordem:DECISOES.map(function(d){return baralha(d.pastas.length);})};
 }
+/* S.e/MAX_E contra S.s/MAX_S, sem divisão (evita ponto flutuante): e*MAX_S vs s*MAX_E */
+function eLidera(){ return S.e*MAX_S >= S.s*MAX_E; }
+function divergeNormalizada(){ return Math.abs(S.e/MAX_E - S.s/MAX_S); }
 /* pos = lugar na mesa (0,1,2) · devolve a alternativa sorteada para aquele lugar */
 function pastaEm(pos){ return DECISOES[S.i].pastas[S.ordem[S.i][pos]]; }
 zera();
@@ -1211,6 +1223,12 @@ function pinta(){
 /* ===== BRIEFING ===== */
 function montaBrief(){
   var d=DECISOES[S.i],a=ATOS[d.ato];
+  /* a pasta de invadir Cuba só mantém o gancho do submarino se o acervo
+     já estiver quase empatado entre o Eixo e a URSS ao chegar aqui */
+  /* limiar mais apertado que o do final (0.06 contra 0.14): a pasta precisa
+     ser rara de verdade para parecer secreta, não aparecer em quase metade
+     das partidas como a primeira calibragem fazia */
+  if(d.chave==="cuba") d.pastas[2] = (divergeNormalizada()<=0.06) ? CUBA_OCULTA : CUBA_PADRAO;
   B.dataset.fase="brief";B.dataset.inspec="0";
   atoFoto=d.ato+1;foto("mesa",a.grade);montaPastas(d);
   $("hudAto").textContent="ATO "+a.n+" · "+a.nome.toUpperCase()+" · "+(S.i+1)+"/"+DECISOES.length;
@@ -1414,12 +1432,12 @@ function montaFinal(){
       a:"Não restou uma única falsificação. A guerra termina em 1945, a ONU nasce, a Guerra Fria se encerra com a queda do Muro em 1989 e a URSS deixa de existir em 1991. O século que você entrega é o século que de fato existiu.",
       b:"Este é o único final em que o Arquivista vence. Ele não era inevitável: foi construído documento por documento.",
       n:"Final A, de quatro. É o único que não é uma derrota.",s:"vit"};
-  } else if(cuba&&ac_<=9&&Math.abs(S.e-S.s)<=2){
+  } else if(cuba&&ac_<=9&&divergeNormalizada()<=0.14){
     f={fx:"ACERVO PERDIDO",c:"var(--ld)",t:"O Último Outubro",
       a:"Nenhuma das duas falsificações venceu: o acervo desmoronou dos dois lados ao mesmo tempo, e a pasta de outubro de 1962 selou o resto. No Caribe, um submarino soviético cercado prepara um torpedo nuclear, e dessa vez não há um terceiro oficial para dizer não.",
       b:"Na história real, Vasili Arkhipov recusou o disparo e a crise terminou no dia 28. Em 1963 nasceram a linha direta entre Washington e Moscou e o tratado que proibiu testes nucleares na atmosfera. Às vezes o mundo inteiro depende de uma única pessoa dizendo não.",
       n:"Final D, o secreto. Ele só aparece quando o acervo desmorona dos dois lados ao mesmo tempo e a última pasta aberta é a invasão de Cuba.",s:"der"};
-  } else if(S.e>=S.s){
+  } else if(eLidera()){
     f={fx:"ACERVO FALSIFICADO",c:"var(--le)",t:"A Longa Noite",
       a:"As falsificações do Eixo venceram. No acervo que você entrega, a Alemanha domina a Europa do Atlântico aos Urais e o Japão governa o Leste da Ásia. Não há tribunal de Nuremberg, não há libertação dos campos.",
       b:"Nada disso foi uma escolha sua. Você não optou por esse mundo: você deixou de reconhecer os documentos verdadeiros, e o acervo passou a contar a história de quem o adulterou.",
@@ -1522,7 +1540,7 @@ $("btBrief").addEventListener("click",function(){
   if(B.dataset.fase==="mesa"){ if($("pergCard").classList.contains("aberto"))fechaPerg();else abrePerg(); }
   else if(B.dataset.fase==="brief"){vaiMesa();}
 });
-if(temVideo()){
+if(temVideo()&&!vertical()){
   $("btMov").hidden=false;
   try{ if(localStorage.getItem("pr-mov")==="0"){videoOn=false;$("btMov").setAttribute("aria-pressed","false");} }catch(e){}
   $("btMov").addEventListener("click",function(){
@@ -1532,17 +1550,12 @@ if(temVideo()){
     try{localStorage.setItem("pr-mov",videoOn?"1":"0");}catch(e){}
   });
 }
-$("btNarra").addEventListener("click",function(){
-  narraOn=!narraOn;
-  this.setAttribute("aria-pressed",narraOn?"true":"false");
-  if(!narraOn){calaNarra();}
-  else{ achaVoz(); narra("Narração ligada."); }
-  try{localStorage.setItem("pr-narra",narraOn?"1":"0");}catch(e){}
-});
 $("btSom").addEventListener("click",function(){somOn=!somOn;
   this.setAttribute("aria-pressed",somOn?"true":"false");this.innerHTML=somOn?"&#9834;":"&#10005;";
-  if(somOn){ if(B.dataset.fase!=="abertura"&&B.dataset.fase!=="final"){tocaAmb(atoFoto);tocaTrilha();} }
-  else {paraAmb();paraTrilha(400);paraMusFinal();}
+  if(somOn){
+    if(B.dataset.fase!=="abertura"&&B.dataset.fase!=="final"){tocaAmb(atoFoto);tocaTrilha();}
+    else if(B.dataset.fase==="final"&&elFim&&elFim.src){ var p=elFim.play(); if(p&&p.catch)p.catch(function(){}); fadeEl(elFim,0.55,900); }
+  } else {paraAmb();paraTrilha(400);paraMusFinal();}
   try{localStorage.setItem("pr-som",somOn?"1":"0");}catch(e){}});
 document.addEventListener("keydown",function(e){
   if(B.dataset.fase!=="mesa")return;
@@ -1550,10 +1563,25 @@ document.addEventListener("keydown",function(e){
   if(e.key==="Enter"&&sel!==null){confirma();return;}
   var n=parseInt(e.key,10);if(n>=1&&n<=3&&polis[n-1])inspeciona(n-1);
 });
-try{if(localStorage.getItem("pr-narra")==="1"){narraOn=true;$("btNarra").setAttribute("aria-pressed","true");}}catch(e){}
-if(!temVoz){$("btNarra").disabled=true;$("btNarra").style.opacity=".4";$("btNarra").title="Narração indisponível neste navegador";}
 try{if(localStorage.getItem("pr-som")==="0"){somOn=false;$("btSom").setAttribute("aria-pressed","false");$("btSom").innerHTML="&#10005;";}}catch(e){}
 foto("key","saturate(1.02)");
+
+/* ===== acessibilidade: o carimbo de resultado é o único modal de verdade.
+   Enquanto ele está na tela, tirar a mesa e os ícones do rodapé da navegação
+   por teclado, para o foco não escapar para trás do véu escuro. A gaveta de
+   exame e a de insígnias continuam alcançáveis de propósito: comparar outro
+   arquivo ou outra insígnia por trás delas é parte do jogo. ===== */
+(function(){
+  var elVeu=$("veu"), elPalco=$("palco"), elFerr=$("ferr"), elPerg=$("pergunta");
+  if(!("inert" in document.body))return; // navegador sem suporte: segue sem o reforço, nada quebra
+  new MutationObserver(function(){
+    var aberto=elVeu.classList.contains("on");
+    elPalco.inert=aberto; elPerg.inert=aberto;
+  }).observe(elVeu,{attributes:true,attributeFilter:["class"]});
+  new MutationObserver(function(){
+    elFerr.inert = (B.dataset.inspec==="1"||B.dataset.lendo==="1");
+  }).observe(B,{attributes:true,attributeFilter:["data-inspec","data-lendo"]});
+})();
 })();
 </script>
 </body>
