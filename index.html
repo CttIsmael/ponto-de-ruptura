@@ -323,6 +323,20 @@ body[data-inspec="1"] #pergunta{opacity:1}
 #conqArte{flex:0 0 auto;width:36px;height:48px;display:block}
 #conqArte img{width:100%;height:100%;object-fit:contain;display:block}
 
+/* ============ CRÉDITOS ============ */
+#creditos{position:fixed;inset:0;z-index:48;background:rgba(6,5,3,.92);display:none;
+  align-items:flex-start;justify-content:center;padding:calc(var(--st) + 24px) 16px calc(var(--sb) + 24px);
+  overflow-y:auto;-webkit-overflow-scrolling:touch}
+#creditos.on{display:flex;animation:fade .25s ease-out}
+.credIn{max-width:600px;width:100%;background:var(--ficha);border:1px solid var(--linha);
+  border-radius:14px;padding:26px 24px;box-shadow:0 10px 50px rgba(0,0,0,.7)}
+.credItem{border-bottom:1px solid var(--linha);padding:14px 0}
+.credItem:last-child{border-bottom:none}
+.credItem .rot{margin-bottom:5px}
+.credItem b{display:block;font-family:var(--n);font-size:17px;font-weight:600;color:var(--tinta)}
+.credItem .meta{margin-top:5px;line-height:18px}
+#creditos .btn{margin-top:22px}
+
 /* ============ FERRAMENTAS ============ */
 #ferr{position:fixed;right:10px;top:calc(var(--st) + 8px);z-index:55;display:flex;gap:7px}
 .ic{width:40px;height:40px;border-radius:99px;border:1px solid var(--linha);background:rgba(20,16,11,.92);
@@ -480,6 +494,15 @@ body[data-fase="final"][data-final="A"] #marcaFinal{opacity:1;
   </div>
 </div>
 
+<div id="creditos" role="dialog" aria-modal="true" aria-labelledby="credTit">
+  <div class="credIn">
+    <p class="rot" style="color:var(--carimbo)">Ficha técnica do Arquivo</p>
+    <h2 class="tit" id="credTit">Créditos</h2>
+    <div id="credLista"></div>
+    <button class="btn" id="btCredFechar">Fechar</button>
+  </div>
+</div>
+
 <!-- ABERTURA -->
 <div class="folha on" id="fAbertura"><div class="col" style="padding-top:18px">
   <div class="centro">
@@ -488,10 +511,11 @@ body[data-fase="final"][data-final="A"] #marcaFinal{opacity:1;
     <p class="cena" style="color:var(--suave)">Cada escolha abre um século diferente.</p>
   </div>
   <div class="painel" style="margin-top:22px">
-    <p class="cena">Você é o último Arquivista. O acervo foi adulterado: para cada momento decisivo existem três arquivos com versões diferentes do mesmo documento sobre a mesa, e só uma é autêntica.</p>
-    <p class="cena">Examine os arquivos, compare e valide. O que você validar vira história oficial — a verdadeira ou a falsificada.</p>
-    <p class="cena" style="font-weight:600;margin-bottom:0">Quinze decisões. Um único final em que o século é reconstruído.</p>
+    <p class="cena">Você é o último Arquivista. O acervo foi mexido: para cada momento importante da história, agora existem três documentos diferentes sobre a mesa, e só um deles é verdadeiro.</p>
+    <p class="cena">Examine os documentos, compare um com o outro, e decida qual é o verdadeiro. O que você escolher vira a história oficial, seja ela a verdadeira, seja a falsa.</p>
+    <p class="cena" style="font-weight:600;margin-bottom:0">Só existe um final em que você acerta tudo e devolve ao mundo a história real.</p>
     <button class="btn" id="btComecar">Entrar no arquivo</button>
+    <button class="btn btn--g" id="btCreditos1">Ver os créditos</button>
   </div>
   <p class="meta centro" style="margin-top:18px">5 atos &middot; cerca de 20 minutos &middot; fones recomendados</p>
 </div></div>
@@ -559,229 +583,605 @@ body[data-fase="final"][data-final="A"] #marcaFinal{opacity:1;
     <p class="meta" id="xNota" style="margin:0"></p>
   </div>
   <button class="btn rv" id="btRe">Recomeçar o arquivo</button>
+  <button class="btn btn--g rv" id="btCreditos2">Ver os créditos</button>
 </div></div>
 
 <script>
+// Ponto de Ruptura - roteiro em linguagem mais direta, pensado para o Ensino Medio.
 var ATOS = [
- {n:"I",  nome:"Prelúdio",        periodo:"1938 – 1940", grade:"sepia(.18) saturate(1.05)",            fim:"Junho de 1940. A França caiu. O Reino Unido resiste sozinho do outro lado do Canal."},
- {n:"II", nome:"Guerra global",   periodo:"1940 – 1941", grade:"sepia(.10) saturate(1.1) hue-rotate(-6deg)", fim:"Dezembro de 1941. A guerra virou mundial. O Eixo está no auge e, pela primeira vez, cercado."},
- {n:"III",nome:"A virada",        periodo:"1942 – 1944", grade:"saturate(.9) contrast(1.08) hue-rotate(4deg)", fim:"Agosto de 1944. Paris está livre e o Exército Vermelho avança. A pergunta já não é quem vence."},
- {n:"IV", nome:"O desfecho",      periodo:"1943 – 1945", grade:"saturate(.75) contrast(1.12) brightness(.94)", fim:"1945. A guerra acabou. Entre os vencedores, a desconfiança já começou."},
- {n:"V",  nome:"O mundo depois",  periodo:"1947 – 1991", grade:"saturate(.6) contrast(1.15) brightness(.9) hue-rotate(-10deg)", fim:"1991. O século chega ao fim. O que o acervo guarda agora é o que as próximas gerações vão chamar de história."}
+  {
+    "n":"I",
+    "nome":"Prelúdio",
+    "periodo":"1938 – 1940",
+    "grade":"none",
+    "fim":"Junho de 1940. A França perdeu a guerra. Só o Reino Unido continua lutando, do outro lado do mar. A URSS está de fora, protegida por um acordo em que ninguém confia de verdade."
+  },
+  {
+    "n":"II",
+    "nome":"Guerra global",
+    "periodo":"1940 – 1941",
+    "grade":"none",
+    "fim":"Dezembro de 1941. A guerra chegou ao mundo inteiro. A Alemanha e o Japão nunca estiveram tão fortes. Mas agora têm três inimigos ao mesmo tempo: a URSS, o Império Britânico e os Estados Unidos."
+  },
+  {
+    "n":"III",
+    "nome":"A virada",
+    "periodo":"1942 – 1944",
+    "grade":"none",
+    "fim":"Agosto de 1944. Paris acabou de ser libertada, e o Exército Vermelho avança pelo leste. A pergunta mudou: já não é mais quem vai vencer a guerra."
+  },
+  {
+    "n":"IV",
+    "nome":"O desfecho",
+    "periodo":"1943 – 1945",
+    "grade":"none",
+    "fim":"1945. A guerra terminou. Mas entre os países que venceram juntos, já começa a crescer a desconfiança."
+  },
+  {
+    "n":"V",
+    "nome":"O mundo depois",
+    "periodo":"1947 – 1991",
+    "grade":"none",
+    "fim":"1991. O século chega ao fim. O jeito como ele termina vai virar a história que as próximas gerações vão aprender."
+  }
 ];
 
 var DECISOES = [
-/* ---------------- ATO I ---------------- */
-{ato:0, data:"29 de setembro de 1938 · Munique, Alemanha", titulo:"Conferência de Munique",
- texto:["Hitler exige os Sudetos, faixa da Tchecoslováquia onde vivem cerca de 3 milhões de pessoas de língua alemã. Se não for atendido, ameaça invadir.",
-        "À mesa estão Chamberlain, Daladier e Mussolini. O governo tcheco não foi convidado. Em Moscou, Stalin tem um tratado de defesa com os tchecos, mas só age se a França agir primeiro."],
- pergunta:"Qual das três pastas registra o que realmente aconteceu nesta noite?",
- pastas:[
-  {cod:"MUN-A · 14 fls.", rot:"Reino Unido e França cedem os Sudetos à Alemanha", tipo:"h", frase:"O papel confere. Chamberlain volta a Londres prometendo paz — e ela vai durar onze meses."},
-  {cod:"MUN-B · 09 fls.", rot:"A Tchecoslováquia inteira é entregue sem resistência", tipo:"e", frase:"A falsificação entra no acervo. Sem disparar um tiro, as fábricas de armas tchecas mudam de dono."},
-  {cod:"MUN-C · 21 fls.", rot:"Londres e Paris se aliam à URSS para defender os tchecos", tipo:"s", frase:"A falsificação entra no acervo. Pela primeira vez Moscou senta à mesa como aliada do Ocidente."}],
- card:{titulo:"Acordo de Munique",
-  corpo:"Assinado na madrugada de 30 de setembro de 1938, obrigou a Tchecoslováquia a entregar os Sudetos. Chamberlain voltou dizendo ter garantido a paz. Em março de 1939 a Alemanha ocupou o restante da Boêmia e da Morávia. Desde então, apaziguamento virou sinônimo de ceder diante de um agressor.",
-  cur:"A URSS também não foi convidada. Stalin passou a desconfiar de Londres e Paris, e isso pesou na decisão seguinte.",
-  fonte:"Fontes: Imperial War Museums; Encyclopaedia Britannica."}},
-
-{ato:0, data:"Agosto de 1939 · Moscou, URSS", titulo:"Pacto Molotov-Ribbentrop",
- texto:["A Europa sabe que a guerra está perto. Hitler quer a Polônia, mas teme lutar em duas frentes.",
-        "Uma missão militar britânica e francesa chegou a Moscou sem pressa e sem poderes para fechar acordo. Ao mesmo tempo, Ribbentrop oferece a Stalin um pacto de não agressão e uma divisão secreta do Leste Europeu."],
- pergunta:"Para que lado a URSS se voltou?",
- pastas:[
-  {cod:"MOS-A · 17 fls.", rot:"A URSS fecha aliança militar com Reino Unido e França", tipo:"s", frase:"A falsificação entra no acervo. A Alemanha fica cercada antes mesmo de atacar a Polônia."},
-  {cod:"MOS-B · 11 fls.", rot:"URSS e Alemanha assinam um pacto de não agressão", tipo:"h", frase:"O papel confere. Uma semana depois, a Alemanha invade a Polônia. Começa a Segunda Guerra Mundial."},
-  {cod:"MOS-C · 08 fls.", rot:"A URSS entra formalmente no pacto do Eixo", tipo:"e", frase:"A falsificação entra no acervo. Com petróleo e cereais soviéticos garantidos, o Reich não teme mais bloqueio algum."}],
- card:{titulo:"Pacto Molotov-Ribbentrop",
-  corpo:"Assinado em 23 de agosto de 1939. Um protocolo secreto dividia o Leste Europeu entre os dois países. A Alemanha invadiu a Polônia em 1º de setembro; Reino Unido e França declararam guerra no dia 3; a URSS invadiu o leste polonês em 17 de setembro.",
-  cur:"A URSS negou a existência do protocolo secreto até 1989. Em novembro de 1940, Molotov chegou a ir a Berlim discutir a entrada soviética no Eixo — e Hitler nunca respondeu às exigências de Stalin.",
-  fonte:"Fontes: United States Holocaust Memorial Museum; Encyclopaedia Britannica."}},
-
-{ato:0, data:"24 de maio de 1940 · Dunquerque, França", titulo:"O cerco de Dunquerque",
- texto:["Em duas semanas os blindados alemães atravessaram as Ardenas e partiram os exércitos aliados ao meio. Cerca de 400 mil soldados britânicos e franceses estão encurralados na praia, de costas para o mar.",
-        "Em Londres, Churchill enfrenta pressão dentro do próprio governo: Lord Halifax sugere sondar um acordo de paz com Berlim, usando Mussolini como intermediário."],
- pergunta:"O que os arquivos registram sobre aquela manhã?",
- pastas:[
-  {cod:"DUN-A · 06 fls.", rot:"Os blindados avançam e o exército britânico é capturado", tipo:"e", frase:"A falsificação entra no acervo. Sem seu exército, Londres aceita negociar e sai da guerra."},
-  {cod:"DUN-B · 19 fls.", rot:"Os blindados param e os soldados são resgatados pelo mar", tipo:"h", frase:"O papel confere. Navios de guerra e centenas de barcos civis atravessam o Canal. O Reino Unido continua na luta."},
-  {cod:"DUN-C · 13 fls.", rot:"Churchill cai e Halifax assume as negociações de paz", tipo:"e", frase:"A falsificação entra no acervo. O gabinete britânico escolhe a mesa em vez da praia."}],
- card:{titulo:"Operação Dínamo",
-  corpo:"Em 24 de maio de 1940, comandantes alemães pararam os blindados para reagrupar e deixar a força aérea terminar o trabalho. Entre 26 de maio e 4 de junho, cerca de 338 mil soldados foram evacuados, com ajuda de centenas de barcos civis. Entre 25 e 28 de maio o gabinete britânico debateu a proposta de Halifax, e Churchill venceu.",
-  cur:"Quase todo o equipamento pesado ficou na praia. Em 4 de junho, Churchill fez o discurso em que prometeu lutar nas praias.",
-  fonte:"Fontes: Imperial War Museums; National Army Museum."}},
-
-/* ---------------- ATO II ---------------- */
-{ato:1, data:"Agosto de 1940 · Céu do sul da Inglaterra", titulo:"Batalha da Inglaterra",
- texto:["Para invadir a ilha, a Alemanha precisa antes dominar o céu. A Luftwaffe ataca dia e noite os aeródromos da RAF, e os pilotos britânicos estão no limite.",
-        "Em 25 de agosto, bombardeiros britânicos atingem Berlim. Hitler promete vingança."],
- pergunta:"O que a Luftwaffe fez a seguir?",
- pastas:[
-  {cod:"LON-A · 12 fls.", rot:"A Luftwaffe destrói a RAF e a invasão da ilha é lançada", tipo:"e", frase:"A falsificação entra no acervo. Sem defesa aérea, o sul da Inglaterra fica exposto."},
-  {cod:"LON-B · 23 fls.", rot:"A Luftwaffe troca os aeródromos por Londres e a RAF se recupera", tipo:"h", frase:"O papel confere. Londres arde por meses, mas a RAF volta a voar e a invasão é adiada para sempre."},
-  {cod:"LON-C · 07 fls.", rot:"Stalin abre uma frente no leste e a Luftwaffe é desviada", tipo:"s", frase:"A falsificação entra no acervo. A pressão sai do Canal e vai para a Polônia."}],
- card:{titulo:"Batalha da Inglaterra",
-  corpo:"Durou de julho a outubro de 1940. Em agosto, os ataques aos aeródromos levaram a RAF ao limite. Em 7 de setembro a Luftwaffe passou a atacar Londres, em parte como retaliação ao bombardeio de Berlim. Começava a Blitz, que mataria mais de 40 mil civis britânicos até maio de 1941. A pausa deu fôlego à RAF, e em 17 de setembro Hitler adiou a invasão indefinidamente.",
-  cur:"Uma rede de radares na costa, a Chain Home, avisava a RAF da chegada dos aviões alemães.",
-  fonte:"Fontes: Imperial War Museums; RAF Museum."}},
-
-{ato:1, data:"Junho de 1941 · Fronteira germano-soviética", titulo:"Operação Barbarossa",
- texto:["Mais de 3 milhões de soldados alemães se concentram na fronteira com a URSS. Em Tóquio, o espião soviético Richard Sorge avisa Moscou da data do ataque. Os britânicos mandam alertas parecidos.",
-        "Stalin não acredita. Acha que é provocação para arrastar a URSS à guerra. Trens soviéticos continuam levando grãos e petróleo para a Alemanha."],
- pergunta:"O que aconteceu na fronteira em 22 de junho?",
- pastas:[
-  {cod:"BAR-A · 31 fls.", rot:"A Alemanha invade a URSS de surpresa", tipo:"h", frase:"O papel confere. Em seis meses os alemães chegam aos arredores de Moscou. O inverno e o Exército Vermelho os detêm."},
-  {cod:"BAR-B · 15 fls.", rot:"A Alemanha evita o leste e avança sobre o Oriente Médio", tipo:"e", frase:"A falsificação entra no acervo. O Reich garante seu petróleo e nunca abre a frente que o destruiria."},
-  {cod:"BAR-C · 18 fls.", rot:"Stalin acredita nos alertas e mobiliza antes do ataque", tipo:"s", frase:"A falsificação entra no acervo. A invasão bate num muro de tropas prontas e perde força em semanas."}],
- card:{titulo:"Operação Barbarossa",
-  corpo:"Em 22 de junho de 1941, cerca de 3 milhões de soldados alemães e de países aliados invadiram a URSS, na maior invasão terrestre da história. Stalin tinha recebido vários alertas e ignorado todos. Com a invasão começaram também os fuzilamentos em massa de judeus pelos Einsatzgruppen, uma das etapas iniciais do Holocausto.",
-  cur:"A URSS perdeu cerca de 27 milhões de pessoas na guerra, mais do que qualquer outro país.",
-  fonte:"Fontes: United States Holocaust Memorial Museum; Imperial War Museums."}},
-
-{ato:1, data:"Dezembro de 1941 · Tóquio, Japão", titulo:"Pearl Harbor",
- texto:["Desde agosto os EUA cortaram a venda de petróleo ao Japão, que guerreia na China há quatro anos. Sem combustível, a máquina militar japonesa para em poucos meses.",
-        "Em Tóquio discute-se o ataque ao norte, contra a Sibéria soviética, ou o ataque ao sul, rumo ao petróleo das colônias holandesas. Uma frota navega em silêncio rumo ao Havaí."],
- pergunta:"O que aconteceu em 7 de dezembro?",
- pastas:[
-  {cod:"PAC-A · 10 fls.", rot:"O Japão ataca a Sibéria soviética e poupa os EUA", tipo:"e", frase:"A falsificação entra no acervo. Sem um ataque direto, o Congresso americano não aprova a guerra."},
-  {cod:"PAC-B · 14 fls.", rot:"Hitler não declara guerra aos EUA, que ficam só no Pacífico", tipo:"s", frase:"A falsificação entra no acervo. Na Europa, quem decide a guerra passa a ser Moscou."},
-  {cod:"PAC-C · 27 fls.", rot:"O Japão ataca Pearl Harbor e Hitler declara guerra aos EUA", tipo:"h", frase:"O papel confere. Em quatro dias os EUA estão em guerra contra o Eixo inteiro. O gigante industrial acordou."}],
- card:{titulo:"Pearl Harbor",
-  corpo:"Em 7 de dezembro de 1941 aviões japoneses atacaram a base no Havaí. Mais de 2.400 americanos morreram e boa parte dos encouraçados foi atingida, mas os porta-aviões estavam fora do porto. No dia seguinte os EUA declararam guerra ao Japão; em 11 de dezembro, Alemanha e Itália declararam guerra aos EUA.",
-  cur:"Sorge avisou Moscou que o Japão não atacaria a Sibéria. Isso permitiu a Stalin trazer tropas do Extremo Oriente para defender Moscou.",
-  fonte:"Fontes: The National WWII Museum; National Park Service."}},
-
-/* ---------------- ATO III ---------------- */
-{ato:2, data:"Junho de 1942 · Oceano Pacífico", titulo:"Batalha de Midway",
- texto:["Seis meses depois de Pearl Harbor, o Japão domina o Pacífico. O almirante Yamamoto prepara uma armadilha: atacar o atol de Midway e atrair o que restou da frota americana.",
-        "No Havaí, uma pequena equipe de criptógrafos trabalha dia e noite tentando ler as mensagens navais japonesas. Sabem que vem um ataque. Não têm certeza de onde."],
- pergunta:"O que aconteceu no mar?",
- pastas:[
-  {cod:"MID-A · 09 fls.", rot:"O código não é decifrado e a frota americana afunda", tipo:"e", frase:"A falsificação entra no acervo. O Havaí fica ameaçado e a costa oeste dos EUA entra em pânico."},
-  {cod:"MID-B · 22 fls.", rot:"Os americanos decifram o código e emboscam a frota japonesa", tipo:"h", frase:"O papel confere. Em um dia o Japão perde quatro porta-aviões. A partir daqui, só recua."},
-  {cod:"MID-C · 11 fls.", rot:"A URSS entra na guerra do Pacífico e divide a frota japonesa", tipo:"s", frase:"A falsificação entra no acervo. Tóquio passa a lutar em duas frentes três anos antes da hora."}],
- card:{titulo:"Batalha de Midway",
-  corpo:"Entre 4 e 7 de junho de 1942. Criptógrafos da Marinha americana tinham decifrado parte do código naval japonês. Para confirmar o alvo, enviaram uma mensagem falsa dizendo que Midway estava sem água potável; logo depois, os japoneses relataram que o alvo AF estava sem água. O Japão perdeu quatro porta-aviões; os EUA, um.",
-  cur:"O porta-aviões Yorktown, muito danificado no Mar de Coral um mês antes, foi consertado em cerca de três dias no Havaí para lutar em Midway.",
-  fonte:"Fontes: Naval History and Heritage Command; The National WWII Museum."}},
-
-{ato:2, data:"Novembro de 1942 · Stalingrado, URSS", titulo:"Stalingrado",
- texto:["A ofensiva alemã no sul da URSS tem dois alvos: a cidade no rio Volga e o petróleo do Cáucaso. Dividido, o exército alemão não conquista nenhum dos dois por completo.",
-        "Em Stalingrado luta-se rua por rua. O 6º Exército controla quase toda a cidade em ruínas, mas está no fim de uma linha de abastecimento enorme, com os flancos protegidos por tropas romenas mal armadas."],
- pergunta:"O que aconteceu no Volga?",
- pastas:[
-  {cod:"STA-A · 29 fls.", rot:"O 6º Exército é cercado, Hitler proíbe o recuo e ele se rende", tipo:"h", frase:"O papel confere. Pela primeira vez um exército alemão inteiro se rende. A partir daqui, a Alemanha recua no leste."},
-  {cod:"STA-B · 13 fls.", rot:"A Alemanha prioriza o Cáucaso e toma o petróleo de Baku", tipo:"e", frase:"A falsificação entra no acervo. Com o petróleo soviético, os tanques alemães não param mais."},
-  {cod:"STA-C · 20 fls.", rot:"A contraofensiva cerca também as tropas do Cáucaso", tipo:"s", frase:"A falsificação entra no acervo. Dois exércitos alemães presos de uma vez, e a frente sul desaba."}],
- card:{titulo:"Batalha de Stalingrado",
-  corpo:"De agosto de 1942 a fevereiro de 1943. Em 19 de novembro a Operação Urano rompeu os flancos defendidos por tropas romenas e cercou mais de 250 mil soldados do Eixo. Hitler proibiu a fuga do cerco e uma tentativa de resgate fracassou em dezembro. Os últimos alemães se renderam em 2 de fevereiro de 1943. Dos cerca de 91 mil prisioneiros, só uns 5 mil voltaram para casa.",
-  cur:"Os alemães chegaram aos poços de Maikop, no Cáucaso, mas os soviéticos os tinham destruído antes de recuar.",
-  fonte:"Fontes: Imperial War Museums; Encyclopaedia Britannica."}},
-
-{ato:2, data:"5 de junho de 1944 · Sul da Inglaterra", titulo:"A véspera do Dia D",
- texto:["Milhares de navios, aviões e mais de 150 mil soldados esperam no sul da Inglaterra. Os alemães sabem que a invasão vem, mas acham que será em Calais, onde os aliados montaram um exército falso com tanques infláveis e mensagens de rádio inventadas.",
-        "O tempo está péssimo. Eisenhower tem uma janela curta e já escreveu uma nota assumindo a culpa caso tudo dê errado."],
- pergunta:"O que aconteceu nas praias?",
- pastas:[
-  {cod:"NOR-A · 08 fls.", rot:"O desembarque fracassa e os aliados recuam para a Inglaterra", tipo:"e", frase:"A falsificação entra no acervo. Uma nova tentativa vai levar anos, e a Alemanha manda tudo para o leste."},
-  {cod:"NOR-B · 16 fls.", rot:"Os aliados adiam a invasão e o Exército Vermelho chega ao Reno", tipo:"s", frase:"A falsificação entra no acervo. Quando os aliados enfim desembarcam, os tanques soviéticos já cruzaram a Alemanha."},
-  {cod:"NOR-C · 34 fls.", rot:"O desembarque na Normandia dá certo e Paris é libertada", tipo:"h", frase:"O papel confere. Em dois meses e meio Paris está livre, e a Alemanha luta cercada por dois lados."}],
- card:{titulo:"Dia D e Operação Fortitude",
-  corpo:"Em 6 de junho de 1944 cerca de 156 mil soldados aliados desembarcaram em cinco praias da Normandia. A Operação Fortitude, com tanques infláveis, falsas mensagens de rádio e agentes duplos, convenceu os alemães de que o ataque principal viria em Calais. A praia de Omaha quase fracassou. Paris foi libertada em 25 de agosto.",
-  cur:"Eisenhower escreveu de verdade uma nota assumindo toda a culpa por um possível fracasso. Ela nunca precisou ser usada.",
-  fonte:"Fontes: The National WWII Museum; Eisenhower Presidential Library."}},
-
-/* ---------------- ATO IV ---------------- */
-{ato:3, data:"27 de fevereiro de 1943 · Vemork, Noruega ocupada", titulo:"A corrida pela bomba",
- texto:["Desde 1939 físicos alertam que é possível criar uma arma capaz de destruir uma cidade inteira. Os EUA montaram em segredo o Projeto Manhattan; a Alemanha tem seus próprios cientistas.",
-        "Para o programa alemão, uma substância é essencial: a água pesada, produzida numa usina nas montanhas da Noruega. Nesta noite, nove sabotadores noruegueses descem um desfiladeiro coberto de neve."],
- pergunta:"O que aconteceu em Vemork?",
- pastas:[
-  {cod:"ATO-A · 12 fls.", rot:"A sabotagem funciona e o programa alemão trava", tipo:"h", frase:"O papel confere. A Alemanha perde sua água pesada. Só os EUA terão a bomba em 1945."},
-  {cod:"ATO-B · 07 fls.", rot:"A sabotagem falha e o programa nuclear alemão acelera", tipo:"e", frase:"A falsificação entra no acervo. O mundo entra numa corrida em que o Reich também pode chegar primeiro."},
-  {cod:"ATO-C · 19 fls.", rot:"Espiões soviéticos copiam o projeto e a URSS tem a bomba em 1945", tipo:"s", frase:"A falsificação entra no acervo. Quando a guerra terminar, Moscou não vai ficar atrás de Washington."}],
- card:{titulo:"Operação Gunnerside",
-  corpo:"Na noite de 27 para 28 de fevereiro de 1943, sabotadores noruegueses destruíram os equipamentos de água pesada de Vemork sem disparar um tiro. Em 1944 uma balsa com o estoque restante foi afundada. O programa alemão, sem prioridade e sem recursos, nunca chegou perto de uma bomba. Os EUA testaram a primeira em 16 de julho de 1945; a URSS, em 1949, com ajuda de espiões como Klaus Fuchs.",
-  cur:"O Projeto Manhattan chegou a empregar cerca de 130 mil pessoas, e a maioria não sabia o que estava construindo.",
-  fonte:"Fontes: Atomic Heritage Foundation; Norsk Industriarbeidermuseum."}},
-
-{ato:3, data:"Fevereiro de 1945 · Yalta, Crimeia", titulo:"Conferência de Yalta",
- texto:["A vitória sobre a Alemanha é questão de meses. Num antigo palácio de verão dos czares, Roosevelt, Churchill e Stalin se reúnem para desenhar o mundo do pós-guerra.",
-        "Roosevelt está doente e quer a URSS na guerra contra o Japão e numa nova organização pela paz. Churchill quer uma Polônia livre. Stalin quer uma Europa Oriental que nunca mais sirva de corredor para invasões."],
- pergunta:"O que saiu de Yalta?",
- pastas:[
-  {cod:"YAL-A · 09 fls.", rot:"O Ocidente aceita uma paz separada com uma Alemanha sem Hitler", tipo:"e", frase:"A falsificação entra no acervo. A aliança com Moscou se rompe, e alemães e soviéticos ficam frente a frente."},
-  {cod:"YAL-B · 26 fls.", rot:"A Alemanha é dividida em zonas e Stalin promete eleições na Polônia", tipo:"h", frase:"O papel confere. A promessa sobre a Polônia não será cumprida. Começa a se desenhar a fronteira da Guerra Fria."},
-  {cod:"YAL-C · 15 fls.", rot:"Roosevelt cede a Alemanha inteira à esfera soviética", tipo:"s", frase:"A falsificação entra no acervo. Do Báltico ao Reno, a Europa terá governos alinhados a Moscou."}],
- card:{titulo:"Conferência de Yalta",
-  corpo:"De 4 a 11 de fevereiro de 1945. Os aliados decidiram dividir a Alemanha em zonas de ocupação, com uma também para a França. Stalin prometeu eleições livres na Polônia, que não aconteceram como prometido, e aceitou entrar na guerra contra o Japão até três meses após a derrota alemã. Roosevelt morreu dois meses depois.",
-  cur:"Houve contatos secretos com líderes nazistas em 1945, como a oferta de Himmler em abril para render-se só aos aliados ocidentais. Todas foram recusadas: os aliados exigiam rendição incondicional.",
-  fonte:"Fontes: Office of the Historian, Departamento de Estado dos EUA."}},
-
-{ato:3, data:"Agosto de 1945 · Oceano Pacífico", titulo:"O fim no Pacífico", aviso:"Esta pasta trata da morte de civis em grande escala.",
- texto:["A Alemanha se rendeu em maio. O Japão, não. Em Okinawa a batalha matou mais de 100 mil pessoas entre soldados e civis, e os EUA preparam uma invasão que poderia custar muito mais.",
-        "Em julho os aliados exigiram a rendição incondicional. Tóquio não respondeu. No deserto do Novo México os EUA acabam de testar uma arma nova. Na fronteira da Manchúria, mais de um milhão de soldados soviéticos esperam."],
- pergunta:"Como terminou a guerra no Pacífico?",
- pastas:[
-  {cod:"HIR-A · 11 fls.", rot:"O Japão resiste e negocia a paz mantendo Manchúria e Coreia", tipo:"e", frase:"A falsificação entra no acervo. O império japonês sobrevive à guerra, e a Ásia continua sob domínio de Tóquio."},
-  {cod:"HIR-B · 17 fls.", rot:"Sem a bomba, a URSS invade o norte do Japão e o país é dividido", tipo:"s", frase:"A falsificação entra no acervo. O Japão é partido em dois, como a Coreia."},
-  {cod:"HIR-C · 30 fls.", rot:"Os EUA lançam as bombas atômicas e a URSS ataca a Manchúria", tipo:"h", frase:"O papel confere. Em poucos dias o Japão se rende. Começa a era nuclear."}],
- card:{titulo:"Hiroshima, Nagasaki e a Manchúria",
-  corpo:"Em 6 de agosto de 1945 os EUA lançaram uma bomba atômica sobre Hiroshima. Em 8 de agosto a URSS declarou guerra ao Japão e invadiu a Manchúria. Em 9 de agosto uma segunda bomba atingiu Nagasaki. Estimativas apontam cerca de 140 mil mortos em Hiroshima e 74 mil em Nagasaki até o fim de 1945, a maioria civis. Em 15 de agosto o imperador Hirohito anunciou a rendição.",
-  cur:"Historiadores discutem até hoje o que levou o Japão a se render: uns destacam as bombas, outros dão mais peso à entrada da URSS na guerra. Também se discute se as bombas eram necessárias e se eram justificáveis.",
-  fonte:"Fontes: The National WWII Museum; Museu Memorial da Paz de Hiroshima."}},
-
-/* ---------------- ATO V ---------------- */
-{ato:4, data:"Junho de 1947 · Washington, EUA", titulo:"O Plano Marshall",
- texto:["Dois anos depois da guerra a Europa ainda está em ruínas. O inverno de 1946 para 1947 foi um dos mais duros do século, e falta comida e carvão. Na França e na Itália os partidos comunistas estão entre os mais votados.",
-        "O secretário de Estado George Marshall propõe um programa gigante de ajuda para reconstruir a Europa. No Congresso, muitos acham que os EUA já gastaram demais com problemas dos outros."],
- pergunta:"O que o Congresso decidiu?",
- pastas:[
-  {cod:"MAR-A · 24 fls.", rot:"O Congresso aprova o plano e a Europa Ocidental se reconstrói", tipo:"h", frase:"O papel confere. Fábricas voltam a funcionar, e o comunismo perde força nas urnas do Ocidente."},
-  {cod:"MAR-B · 13 fls.", rot:"O Congresso rejeita e os comunistas vencem na Itália e na França", tipo:"s", frase:"A falsificação entra no acervo. Mais dois países grandes entram na órbita de Moscou."},
-  {cod:"MAR-C · 10 fls.", rot:"Washington condiciona a ajuda ao rearmamento imediato da Alemanha", tipo:"e", frase:"A falsificação entra no acervo. A Europa reconstrói fábricas de armas antes de reconstruir casas."}],
- card:{titulo:"Programa de Recuperação Europeia",
-  corpo:"Marshall apresentou a proposta em 5 de junho de 1947, num discurso em Harvard. O programa foi aprovado em abril de 1948 e distribuiu cerca de 13 bilhões de dólares a países da Europa Ocidental até 1951. A URSS recusou a ajuda e pressionou os países do Leste a recusarem também. Em 1948 Moscou bloqueou Berlim Ocidental, e os aliados abasteceram a cidade por avião durante quase um ano.",
-  cur:"A Tchecoslováquia chegou a aceitar a ajuda, mas recuou depois de pressão de Moscou.",
-  fonte:"Fontes: George C. Marshall Foundation; Office of the Historian."}},
-
-{ato:4, data:"22 de outubro de 1962 · Washington, EUA", titulo:"Crise dos Mísseis", chave:"cuba",
- texto:["Fotos de um avião espião mostram bases de mísseis nucleares soviéticos sendo montadas em Cuba, a cerca de 150 quilômetros da Flórida. De lá podem atingir a maior parte dos EUA em minutos.",
-        "Kennedy reúne seus conselheiros. Os chefes militares querem bombardear as bases e invadir a ilha. Outros propõem cercar Cuba com navios. Navios soviéticos seguem rumo ao Caribe."],
- pergunta:"O que Washington fez?",
- pastas:[
-  {cod:"CUB-A · 14 fls.", rot:"Os EUA recuam e aceitam os mísseis em Cuba", tipo:"s", frase:"A falsificação entra no acervo. Os aliados dos EUA no mundo inteiro passam a duvidar de Washington."},
-  {cod:"CUB-B · 28 fls.", rot:"Os EUA cercam Cuba com navios e negociam um acordo", tipo:"h", frase:"O papel confere. Depois de treze dias de tensão os mísseis saem de Cuba e, em segredo, os americanos saem da Turquia."},
-  {cod:"CUB-C · 03 fls.", rot:"Os EUA bombardeiam as bases e invadem Cuba", tipo:"e", marca:"cuba-invasao", frase:"A falsificação entra no acervo. Os bombardeiros são abastecidos. No mar, navios americanos cercam um submarino soviético que ninguém sabe que carrega um torpedo nuclear."}],
- card:{titulo:"Crise dos Mísseis de Cuba",
-  corpo:"Durou treze dias, de 16 a 28 de outubro de 1962. A URSS instalou os mísseis depois da tentativa americana de invadir Cuba em 1961 e da instalação de mísseis americanos na Turquia. Em 22 de outubro Kennedy anunciou uma quarentena naval. No dia 28 Kruschev aceitou retirar os mísseis em troca da promessa de não invadir Cuba; em segredo, os EUA também retiraram os seus da Turquia.",
-  cur:"Em 27 de outubro, o submarino soviético B-59, cercado e sem contato com Moscou, preparou um torpedo nuclear. O disparo exigia o acordo de três oficiais. Vasili Arkhipov recusou. Depois da crise nasceu a linha direta entre Washington e Moscou.",
-  fonte:"Fontes: John F. Kennedy Presidential Library; National Security Archive."}},
-
-{ato:4, data:"9 de novembro de 1989 · Berlim Oriental", titulo:"A queda do Muro",
- texto:["Em Moscou, Gorbachev prometeu abertura e reformas, e no Leste Europeu as pessoas levaram a sério. A Hungria abriu a fronteira com a Áustria e milhares de alemães orientais fugiram por ali. Em Leipzig, as marchas crescem a cada segunda-feira.",
-        "Nesta noite um porta-voz anuncia, meio atrapalhado, novas regras de viagem que valeriam imediatamente. Milhares correm para os postos de fronteira. Os guardas não têm ordens."],
- pergunta:"O que aconteceu no Muro?",
- pastas:[
-  {cod:"BER-A · 12 fls.", rot:"Moscou envia tanques e os protestos são esmagados", tipo:"s", frase:"A falsificação entra no acervo. O bloco sobrevive, mais fechado do que nunca, e o medo volta às ruas."},
-  {cod:"BER-B · 09 fls.", rot:"Surge uma Alemanha neutra e rearmada entre os dois blocos", tipo:"e", frase:"A falsificação entra no acervo. No centro da Europa nasce uma potência que não responde a ninguém."},
-  {cod:"BER-C · 33 fls.", rot:"Os guardas abrem as passagens e o muro cai", tipo:"h", frase:"O papel confere. Em menos de um ano a Alemanha se reunifica. Em dois, a URSS deixa de existir."}],
- card:{titulo:"A queda do Muro de Berlim",
-  corpo:"Na noite de 9 de novembro de 1989 o porta-voz Günter Schabowski anunciou por engano que a nova lei de viagens valia de imediato. Multidões foram aos postos de fronteira e, sem ordens claras, os guardas abriram as passagens. A Alemanha se reunificou em 3 de outubro de 1990. Em dezembro de 1991 a URSS se dissolveu em 15 países, e a Guerra Fria terminou.",
-  cur:"No mesmo ano, em junho de 1989, o governo da China reprimiu com tanques os protestos na Praça da Paz Celestial. A opção de usar a força estava sobre a mesa.",
-  fonte:"Fontes: Stiftung Berliner Mauer; Encyclopaedia Britannica."}}
+  {
+    "ato":0,
+    "data":"29 de setembro de 1938 · Munique, Alemanha",
+    "titulo":"Conferência de Munique",
+    "texto":[
+      "Hitler quer os Sudetos, uma região da Tchecoslováquia onde vivem cerca de 3 milhões de pessoas que falam alemão. Ele ameaça invadir o país se não conseguir o que quer.",
+      "Na mesa de negociação estão o Reino Unido, a França e a Itália. Ninguém chamou a Tchecoslováquia, o país que vai perder o território. A URSS também ficou de fora, mas tinha um acordo para ajudar os tchecos, se a França entrasse na briga primeiro."
+    ],
+    "pergunta":"Qual das três pastas conta o que realmente aconteceu nessa noite?",
+    "pastas":[
+      {
+        "cod":"MUN-A · 14 fls.",
+        "rot":"Reino Unido e França entregam os Sudetos para a Alemanha",
+        "tipo":"h",
+        "frase":"O papel confere. Chamberlain volta para casa dizendo que garantiu a paz. Essa paz vai durar só onze meses."
+      },
+      {
+        "cod":"MUN-B · 09 fls.",
+        "rot":"A Tchecoslováquia inteira é entregue, sem lutar",
+        "tipo":"e",
+        "frase":"É uma falsificação. Sem disparar um tiro, a Alemanha já fica com as fábricas de armas tchecas e um caminho livre para o leste."
+      },
+      {
+        "cod":"MUN-C · 21 fls.",
+        "rot":"Reino Unido e França se aliam à URSS para defender os tchecos",
+        "tipo":"s",
+        "frase":"É uma falsificação. Pela primeira vez, a URSS vira aliada do Ocidente. O Exército Vermelho ganha um papel de peso na Europa."
+      }
+    ],
+    "card":{
+      "titulo":"Acordo de Munique",
+      "corpo":"O acordo foi assinado de madrugada, em 30 de setembro de 1938. A Tchecoslováquia foi forçada a entregar os Sudetos sem poder opinar. Chamberlain voltou dizendo que tinha garantido a paz. Seis meses depois, em março de 1939, a Alemanha invadiu o resto do país. Foi aí que a palavra \"apaziguamento\", que significa ceder para evitar uma guerra, virou sinônimo de erro.",
+      "cur":"A URSS também não foi chamada para a conferência. Isso fez Stalin desconfiar do Reino Unido e da França, e isso pesou na decisão que vem a seguir.",
+      "fonte":"Fontes: Imperial War Museums; Encyclopaedia Britannica."
+    }
+  },
+  {
+    "ato":0,
+    "data":"Agosto de 1939 · Moscou, URSS",
+    "titulo":"Pacto Molotov-Ribbentrop",
+    "texto":[
+      "A guerra está cada vez mais perto. A Alemanha quer invadir a Polônia, mas tem medo de lutar em duas frentes ao mesmo tempo: uma a oeste, outra a leste.",
+      "Stalin tem duas opções. Uma missão britânica e francesa chegou a Moscou de navio, sem pressa e sem poder de fechar negócio. Do outro lado, a Alemanha oferece um pacto de não se atacarem, com um plano secreto para dividir o Leste Europeu entre os dois países."
+    ],
+    "pergunta":"Para que lado a URSS foi?",
+    "pastas":[
+      {
+        "cod":"MOS-A · 17 fls.",
+        "rot":"A URSS se alia ao Reino Unido e à França",
+        "tipo":"s",
+        "frase":"É uma falsificação. Com esse acordo, a Alemanha fica cercada: se atacar a Polônia, vai ter que enfrentar o Exército Vermelho também."
+      },
+      {
+        "cod":"MOS-B · 11 fls.",
+        "rot":"URSS e Alemanha assinam um pacto para não se atacarem",
+        "tipo":"h",
+        "frase":"O papel confere. Uma semana depois, a Alemanha invade a Polônia. Começa a Segunda Guerra Mundial."
+      },
+      {
+        "cod":"MOS-C · 08 fls.",
+        "rot":"A URSS entra de vez no lado da Alemanha",
+        "tipo":"e",
+        "frase":"É uma falsificação. Com petróleo e comida garantidos pela URSS, a Alemanha deixa de temer qualquer bloqueio."
+      }
+    ],
+    "card":{
+      "titulo":"Pacto Molotov-Ribbentrop",
+      "corpo":"O pacto foi assinado em 23 de agosto de 1939. Dentro dele havia um acordo secreto: Alemanha e URSS combinaram dividir entre si a Polônia e outros países vizinhos. No dia 1º de setembro, a Alemanha invadiu a Polônia. No dia 3, o Reino Unido e a França declararam guerra. No dia 17, foi a vez da URSS invadir a Polônia pelo outro lado.",
+      "cur":"Durante 50 anos, a URSS negou que esse acordo secreto existisse. Só em 1989 admitiu a verdade.",
+      "fonte":"Fontes: United States Holocaust Memorial Museum; Encyclopaedia Britannica."
+    }
+  },
+  {
+    "ato":0,
+    "data":"24 de maio de 1940 · Dunquerque, França",
+    "titulo":"O cerco de Dunquerque",
+    "texto":[
+      "Em só duas semanas, os tanques alemães cortaram os exércitos aliados ao meio. Cerca de 400 mil soldados britânicos e franceses ficaram presos numa praia, encurralados entre o mar e o inimigo.",
+      "Em Londres, o novo primeiro-ministro Winston Churchill enfrenta pressão até dentro do próprio governo. Um de seus ministros sugere tentar negociar a paz com a Alemanha."
+    ],
+    "pergunta":"O que os registros alemães contam sobre aquela manhã?",
+    "pastas":[
+      {
+        "cod":"DUN-A · 06 fls.",
+        "rot":"Os tanques avançam e capturam o exército britânico",
+        "tipo":"e",
+        "frase":"É uma falsificação. Sem seu exército, Londres não tem escolha: aceita negociar, e o Reino Unido sai da guerra."
+      },
+      {
+        "cod":"DUN-B · 19 fls.",
+        "rot":"Os tanques param, e os soldados são resgatados pelo mar",
+        "tipo":"h",
+        "frase":"O papel confere. Navios de guerra e centenas de barcos de pescadores atravessam o mar para buscar os soldados. O Reino Unido continua lutando."
+      },
+      {
+        "cod":"DUN-C · 13 fls.",
+        "rot":"Churchill perde o poder, e um novo governo busca a paz",
+        "tipo":"e",
+        "frase":"É uma falsificação. O governo britânico escolhe negociar em vez de lutar, e a guerra no oeste termina antes mesmo de começar de verdade."
+      }
+    ],
+    "card":{
+      "titulo":"Operação Dínamo",
+      "corpo":"Em 24 de maio de 1940, os comandantes alemães decidiram parar os tanques para reagrupar as tropas. Entre 26 de maio e 4 de junho, cerca de 338 mil soldados foram resgatados, com ajuda de centenas de barcos de pesca e de passeio. Quase todo o equipamento pesado ficou para trás, na praia. Enquanto isso, o governo britânico discutiu por dias se devia negociar a paz. Churchill venceu esse debate.",
+      "cur":"Em 4 de junho, Churchill fez um discurso famoso prometendo lutar \"nas praias, nos campos e nas ruas\" até o fim.",
+      "fonte":"Fontes: Imperial War Museums; National Army Museum."
+    }
+  },
+  {
+    "ato":1,
+    "data":"Agosto de 1940 · Céu do sul da Inglaterra",
+    "titulo":"Batalha da Inglaterra",
+    "texto":[
+      "Para invadir a Inglaterra, a Alemanha precisa primeiro dominar o céu. A força aérea alemã ataca dia e noite os aeroportos militares da RAF, a força aérea britânica, que já está no limite.",
+      "Em 25 de agosto, bombardeiros britânicos atingem Berlim pela primeira vez. Furioso, Hitler promete se vingar."
+    ],
+    "pergunta":"O que a Alemanha fez depois disso?",
+    "pastas":[
+      {
+        "cod":"LON-A · 12 fls.",
+        "rot":"A Alemanha destrói a RAF e lança a invasão",
+        "tipo":"e",
+        "frase":"É uma falsificação. Sem defesa aérea, o sul da Inglaterra fica exposto. A invasão acontece de verdade."
+      },
+      {
+        "cod":"LON-B · 23 fls.",
+        "rot":"A Alemanha troca de alvo e ataca Londres, dando tempo para a RAF se recuperar",
+        "tipo":"h",
+        "frase":"O papel confere. Londres sofre meses de bombardeio, mas a RAF se recupera. A invasão nunca mais acontece."
+      },
+      {
+        "cod":"LON-C · 07 fls.",
+        "rot":"A URSS entra na guerra, e a Alemanha muda o foco para o leste",
+        "tipo":"s",
+        "frase":"É uma falsificação. A pressão sobre a Inglaterra desaparece. Vai toda para a Polônia."
+      }
+    ],
+    "card":{
+      "titulo":"Batalha da Inglaterra",
+      "corpo":"A batalha durou de julho a outubro de 1940. Em agosto, os ataques aos aeroportos quase quebraram a RAF. Em 7 de setembro, em parte como vingança pelo bombardeio em Berlim, a Alemanha passou a atacar Londres. Começava a Blitz, que mataria mais de 40 mil civis britânicos até 1941. Essa pausa deu tempo para a RAF se recuperar, e em 17 de setembro a Alemanha desistiu da invasão.",
+      "cur":"Uma rede de radares na costa inglesa, chamada Chain Home, avisava a RAF sempre que os aviões alemães se aproximavam.",
+      "fonte":"Fontes: Imperial War Museums; RAF Museum."
+    }
+  },
+  {
+    "ato":1,
+    "data":"Junho de 1941 · Fronteira entre Alemanha e URSS",
+    "titulo":"Operação Barbarossa",
+    "texto":[
+      "Mais de 3 milhões de soldados alemães se reúnem na fronteira com a URSS. Um espião soviético em Tóquio avisa Moscou da data exata do ataque. Os britânicos mandam avisos parecidos.",
+      "Stalin não acredita em nenhum deles. Acha que é só uma armação para arrastar a URSS para a guerra. Enquanto isso, trens soviéticos continuam enviando grãos e petróleo para a Alemanha, como manda o acordo entre os dois países."
+    ],
+    "pergunta":"O que aconteceu na fronteira em 22 de junho?",
+    "pastas":[
+      {
+        "cod":"BAR-A · 31 fls.",
+        "rot":"A Alemanha invade a URSS de surpresa",
+        "tipo":"h",
+        "frase":"O papel confere. Em seis meses, os alemães chegam perto de Moscou. O inverno e o Exército Vermelho conseguem pará-los."
+      },
+      {
+        "cod":"BAR-B · 15 fls.",
+        "rot":"A Alemanha desiste do leste e ataca o Oriente Médio",
+        "tipo":"e",
+        "frase":"É uma falsificação. A Alemanha garante o petróleo de que precisa, e nunca abre a frente de batalha que, na vida real, viria a destruí-la."
+      },
+      {
+        "cod":"BAR-C · 18 fls.",
+        "rot":"Stalin acredita nos avisos e prepara o exército antes do ataque",
+        "tipo":"s",
+        "frase":"É uma falsificação. A invasão esbarra num exército já pronto para lutar. Perde força em poucas semanas."
+      }
+    ],
+    "card":{
+      "titulo":"Operação Barbarossa",
+      "corpo":"Em 22 de junho de 1941, cerca de 3 milhões de soldados alemães invadiram a URSS. Foi a maior invasão por terra da história. Stalin recebeu vários avisos e não acreditou em nenhum. Junto com a invasão, começaram os fuzilamentos em massa de judeus por tropas especiais alemãs: o início do Holocausto.",
+      "cur":"A URSS perdeu cerca de 27 milhões de pessoas na guerra. Foi o país que mais perdeu vidas em todo o conflito.",
+      "fonte":"Fontes: United States Holocaust Memorial Museum; Imperial War Museums; Encyclopaedia Britannica."
+    }
+  },
+  {
+    "ato":1,
+    "data":"Dezembro de 1941 · Tóquio, Japão",
+    "titulo":"Pearl Harbor",
+    "texto":[
+      "Desde agosto, os Estados Unidos pararam de vender petróleo para o Japão, que já guerreia na China há quatro anos. Sem combustível, o exército japonês vai parar em poucos meses.",
+      "Em Tóquio, surgem duas ideias: atacar a Sibéria soviética, ou atacar as colônias europeias no sul, de onde viria o petróleo necessário. Mas essa segunda opção significa atacar também a frota americana. Uma frota japonesa já navega em silêncio rumo ao Havaí."
+    ],
+    "pergunta":"O que aconteceu em 7 de dezembro?",
+    "pastas":[
+      {
+        "cod":"PAC-A · 10 fls.",
+        "rot":"O Japão ataca a Sibéria soviética e deixa os EUA de fora",
+        "tipo":"e",
+        "frase":"É uma falsificação. Sem ataque direto, o Congresso americano não entra na guerra."
+      },
+      {
+        "cod":"PAC-B · 14 fls.",
+        "rot":"Hitler não declara guerra aos EUA, que lutam só no Pacífico",
+        "tipo":"s",
+        "frase":"É uma falsificação. Os americanos voltam toda a força deles contra o Japão. Na Europa, quem decide a guerra passa a ser Moscou."
+      },
+      {
+        "cod":"PAC-C · 27 fls.",
+        "rot":"O Japão ataca Pearl Harbor, e Hitler declara guerra aos EUA",
+        "tipo":"h",
+        "frase":"O papel confere. Em quatro dias, os Estados Unidos entram em guerra contra Alemanha, Itália e Japão ao mesmo tempo."
+      }
+    ],
+    "card":{
+      "titulo":"Pearl Harbor",
+      "corpo":"Em 7 de dezembro de 1941, aviões japoneses atacaram a base naval dos EUA no Havaí. Mais de 2.400 americanos morreram, e boa parte dos navios de guerra foi atingida. Mas os porta-aviões não estavam no porto naquele dia. No dia seguinte, os EUA declararam guerra ao Japão. Em 11 de dezembro, Alemanha e Itália declararam guerra aos EUA.",
+      "cur":"Um espião soviético avisou Moscou que o Japão não ia atacar a Sibéria. Por isso, Stalin pôde trazer tropas do Extremo Oriente para defender Moscou.",
+      "fonte":"Fontes: The National WWII Museum; National Park Service."
+    }
+  },
+  {
+    "ato":2,
+    "data":"Junho de 1942 · Oceano Pacífico",
+    "titulo":"Batalha de Midway",
+    "texto":[
+      "Seis meses depois de Pearl Harbor, o Japão domina o Pacífico. O almirante Yamamoto prepara uma armadilha: atacar o atol de Midway para atrair e destruir de vez a frota americana.",
+      "No Havaí, uma pequena equipe trabalha dia e noite tentando decifrar as mensagens secretas da Marinha japonesa. Eles sabem que um ataque está vindo, só não têm certeza de onde."
+    ],
+    "pergunta":"O que aconteceu no mar?",
+    "pastas":[
+      {
+        "cod":"MID-A · 09 fls.",
+        "rot":"O código não é decifrado, e a frota americana é destruída",
+        "tipo":"e",
+        "frase":"É uma falsificação. O Havaí fica ameaçado, e a costa oeste dos Estados Unidos entra em pânico."
+      },
+      {
+        "cod":"MID-B · 22 fls.",
+        "rot":"Os americanos decifram o código e surpreendem a frota japonesa",
+        "tipo":"h",
+        "frase":"O papel confere. Em um único dia, o Japão perde quatro porta-aviões. A partir daqui, só vai recuar."
+      },
+      {
+        "cod":"MID-C · 11 fls.",
+        "rot":"A URSS entra na guerra do Pacífico e divide as forças do Japão",
+        "tipo":"s",
+        "frase":"É uma falsificação. O Japão passa a lutar em duas frentes três anos antes do previsto."
+      }
+    ],
+    "card":{
+      "titulo":"Batalha de Midway",
+      "corpo":"Aconteceu entre 4 e 7 de junho de 1942. Os criptógrafos americanos, as pessoas que quebram códigos secretos, já tinham decifrado parte das mensagens japonesas. Para ter certeza do alvo, mandaram uma mensagem falsa dizendo que Midway estava sem água. Pouco depois, interceptaram um aviso japonês confirmando que o alvo \"AF\" estava sem água: a prova de que Midway era mesmo o alvo. Na batalha, o Japão perdeu quatro porta-aviões. Os EUA perderam só um.",
+      "cur":"O porta-aviões americano Yorktown tinha ficado gravemente danificado um mês antes. Foi consertado às pressas, em só três dias, para poder lutar em Midway.",
+      "fonte":"Fontes: Naval History and Heritage Command; The National WWII Museum."
+    }
+  },
+  {
+    "ato":2,
+    "data":"Novembro de 1942 · Stalingrado, URSS",
+    "titulo":"Stalingrado",
+    "texto":[
+      "No verão, a Alemanha lançou uma grande ofensiva no sul da URSS com dois alvos: a cidade de Stalingrado e o petróleo do Cáucaso. Ao tentar pegar os dois ao mesmo tempo, acabou dividindo as próprias forças.",
+      "Em Stalingrado, a luta é rua por rua. O 6º Exército alemão já controla quase toda a cidade, mas está no fim de uma longa linha de abastecimento, e os lados mais fracos dessa linha são defendidos só por tropas romenas, mal armadas."
+    ],
+    "pergunta":"O que aconteceu no rio Volga?",
+    "pastas":[
+      {
+        "cod":"STA-A · 29 fls.",
+        "rot":"O 6º Exército é cercado, Hitler proíbe a retirada, e ele se rende",
+        "tipo":"h",
+        "frase":"O papel confere. Pela primeira vez, um exército alemão inteiro se rende. A partir daqui, a Alemanha só recua no leste."
+      },
+      {
+        "cod":"STA-B · 13 fls.",
+        "rot":"A Alemanha foca no Cáucaso e conquista o petróleo de Baku",
+        "tipo":"e",
+        "frase":"É uma falsificação. Com petróleo soviético garantido, os tanques alemães nunca mais ficam sem combustível."
+      },
+      {
+        "cod":"STA-C · 20 fls.",
+        "rot":"O contra-ataque soviético também cerca as tropas do Cáucaso",
+        "tipo":"s",
+        "frase":"É uma falsificação. Dois exércitos alemães ficam presos de uma vez só, e toda a frente sul desmorona."
+      }
+    ],
+    "card":{
+      "titulo":"Batalha de Stalingrado",
+      "corpo":"A batalha durou de agosto de 1942 a fevereiro de 1943. Em 19 de novembro, um grande contra-ataque soviético, a Operação Urano, rompeu a defesa romena e cercou mais de 250 mil soldados do Eixo. Hitler proibiu qualquer fuga. Uma tentativa de resgate falhou em dezembro. Os últimos alemães se renderam em 2 de fevereiro de 1943. Dos cerca de 91 mil prisioneiros, só uns 5 mil voltaram vivos para casa.",
+      "cur":"Os alemães chegaram a ocupar os poços de petróleo de Maikop, no Cáucaso. Mas os soviéticos já tinham destruído tudo antes de recuar.",
+      "fonte":"Fontes: Imperial War Museums; Encyclopaedia Britannica."
+    }
+  },
+  {
+    "ato":2,
+    "data":"5 de junho de 1944 · Sul da Inglaterra",
+    "titulo":"A véspera do Dia D",
+    "texto":[
+      "Milhares de navios, aviões e mais de 150 mil soldados esperam no sul da Inglaterra. Os alemães sabem que a invasão está chegando, mas acham que vai ser em Calais, onde os Aliados montaram um exército falso, com tanques de borracha e mensagens de rádio inventadas.",
+      "O tempo está péssimo, e o general Eisenhower tem uma janela muito curta para agir. Ele já escreveu, em segredo, um pedido de desculpas para o caso de tudo dar errado."
+    ],
+    "pergunta":"O que aconteceu nas praias?",
+    "pastas":[
+      {
+        "cod":"NOR-A · 08 fls.",
+        "rot":"O desembarque falha, e os Aliados recuam para a Inglaterra",
+        "tipo":"e",
+        "frase":"É uma falsificação. Uma nova tentativa vai demorar anos, e dá tempo para a Alemanha jogar tudo no leste."
+      },
+      {
+        "cod":"NOR-B · 16 fls.",
+        "rot":"Os Aliados adiam a invasão, e o Exército Vermelho chega primeiro ao rio Reno",
+        "tipo":"s",
+        "frase":"É uma falsificação. Quando os Aliados finalmente desembarcam, os tanques soviéticos já atravessaram a Alemanha inteira."
+      },
+      {
+        "cod":"NOR-C · 34 fls.",
+        "rot":"O desembarque na Normandia dá certo, e Paris é libertada",
+        "tipo":"h",
+        "frase":"O papel confere. Em dois meses e meio, Paris está livre. A Alemanha agora luta cercada dos dois lados."
+      }
+    ],
+    "card":{
+      "titulo":"Dia D e a Operação Fortitude",
+      "corpo":"Em 6 de junho de 1944, cerca de 156 mil soldados aliados desembarcaram em cinco praias da Normandia, na França. Um plano de enganação, a Operação Fortitude, usou tanques infláveis, mensagens de rádio falsas e espiões duplos para convencer os alemães de que o ataque principal viria em Calais. Na praia de Omaha, o desembarque quase fracassou. Paris foi libertada em 25 de agosto.",
+      "cur":"Eisenhower realmente escreveu uma carta assumindo a culpa, caso o desembarque falhasse. Por sorte, ele nunca precisou enviá-la.",
+      "fonte":"Fontes: The National WWII Museum; Imperial War Museums; Eisenhower Presidential Library."
+    }
+  },
+  {
+    "ato":3,
+    "data":"27 de fevereiro de 1943 · Vemork, Noruega ocupada",
+    "titulo":"A corrida pela bomba",
+    "texto":[
+      "Desde 1939, cientistas já sabem que é possível criar uma arma capaz de destruir uma cidade inteira. Os Estados Unidos montam em segredo o Projeto Manhattan. A Alemanha também tem seus próprios cientistas trabalhando nisso.",
+      "Para fazer essa arma, a Alemanha precisa de uma substância chamada água pesada, produzida numa fábrica nas montanhas da Noruega. Nesta noite, nove noruegueses treinados para sabotagem descem um desfiladeiro coberto de neve, rumo à fábrica."
+    ],
+    "pergunta":"O que aconteceu em Vemork?",
+    "pastas":[
+      {
+        "cod":"ATO-A · 12 fls.",
+        "rot":"A sabotagem funciona, e o programa alemão trava",
+        "tipo":"h",
+        "frase":"O papel confere. A Alemanha perde sua água pesada. Só os Estados Unidos terão a bomba, em 1945."
+      },
+      {
+        "cod":"ATO-B · 07 fls.",
+        "rot":"A sabotagem falha, e o programa nuclear alemão acelera",
+        "tipo":"e",
+        "frase":"É uma falsificação. Começa uma corrida em que a Alemanha também pode chegar primeiro à bomba."
+      },
+      {
+        "cod":"ATO-C · 19 fls.",
+        "rot":"Espiões soviéticos copiam o projeto americano, e a URSS também tem a bomba em 1945",
+        "tipo":"s",
+        "frase":"É uma falsificação. Quando a guerra termina, Moscou já não fica atrás de Washington."
+      }
+    ],
+    "card":{
+      "titulo":"Operação Gunnerside",
+      "corpo":"Na noite de 27 para 28 de fevereiro de 1943, sabotadores noruegueses destruíram os equipamentos de água pesada em Vemork, sem disparar um único tiro. Em 1944, uma balsa levando o que tinha sobrado foi afundada por outro grupo de sabotadores. Sem prioridade e sem recursos, o programa alemão nunca chegou perto de fazer uma bomba de verdade. Os EUA testaram a primeira bomba atômica em 16 de julho de 1945. A URSS testou a sua só em 1949, com ajuda de informações roubadas por espiões, como o físico Klaus Fuchs.",
+      "cur":"O Projeto Manhattan chegou a empregar cerca de 130 mil pessoas, e a maioria delas nem sabia o que estava ajudando a construir.",
+      "fonte":"Fontes: Atomic Heritage Foundation; Norsk Industriarbeidermuseum."
+    }
+  },
+  {
+    "ato":3,
+    "data":"Fevereiro de 1945 · Yalta, Crimeia",
+    "titulo":"Conferência de Yalta",
+    "texto":[
+      "A vitória sobre a Alemanha é só questão de meses. Num palácio de verão dos antigos czares, Roosevelt, Churchill e Stalin se reúnem para decidir como vai ficar o mundo depois da guerra.",
+      "Roosevelt, doente, quer duas coisas: que a URSS entre na guerra contra o Japão, e que ajude a criar uma organização mundial pela paz. Churchill quer uma Polônia livre. Stalin quer uma Europa Oriental que nunca mais sirva de caminho para uma invasão à Rússia."
+    ],
+    "pergunta":"O que saiu de Yalta?",
+    "pastas":[
+      {
+        "cod":"YAL-A · 09 fls.",
+        "rot":"O Ocidente aceita fazer uma paz separada, sem Hitler no poder",
+        "tipo":"e",
+        "frase":"É uma falsificação. A aliança com Moscou se rompe, e alemães e soviéticos ficam sozinhos um contra o outro."
+      },
+      {
+        "cod":"YAL-B · 26 fls.",
+        "rot":"A Alemanha é dividida em zonas, e Stalin promete eleições livres na Polônia",
+        "tipo":"h",
+        "frase":"O papel confere. A promessa sobre a Polônia não vai ser cumprida. Começa a se formar a fronteira da Guerra Fria."
+      },
+      {
+        "cod":"YAL-C · 15 fls.",
+        "rot":"Roosevelt deixa toda a Alemanha sob controle soviético",
+        "tipo":"s",
+        "frase":"É uma falsificação. Do Báltico ao rio Reno, a Europa inteira passa a ter governos ligados a Moscou."
+      }
+    ],
+    "card":{
+      "titulo":"Conferência de Yalta",
+      "corpo":"Aconteceu entre 4 e 11 de fevereiro de 1945. Os três líderes combinaram dividir a Alemanha em zonas de ocupação, incluindo uma para a França. Stalin prometeu eleições livres na Polônia. Essa promessa não foi cumprida depois. Ele também aceitou entrar na guerra contra o Japão até três meses depois da queda da Alemanha. Roosevelt morreu dois meses mais tarde.",
+      "cur":"Em abril de 1945, Heinrich Himmler, líder nazista, tentou se render só para os Aliados ocidentais, sem incluir a URSS. Os Aliados recusaram: só aceitavam uma rendição sem nenhuma condição, de todos os lados ao mesmo tempo.",
+      "fonte":"Fontes: Office of the Historian, Departamento de Estado dos EUA; Encyclopaedia Britannica."
+    }
+  },
+  {
+    "ato":3,
+    "data":"Agosto de 1945 · Oceano Pacífico",
+    "titulo":"O fim no Pacífico",
+    "aviso":"Esta pasta fala sobre a morte de muitos civis.",
+    "texto":[
+      "A Alemanha já se rendeu, em maio. O Japão, não. Na ilha de Okinawa, a luta matou mais de 100 mil pessoas, entre soldados e civis. Os Estados Unidos agora se preparam para invadir o próprio território japonês, o que pode custar ainda mais vidas.",
+      "Em julho, os Aliados pediram a rendição total do Japão, sem nenhuma condição. Tóquio não respondeu. No deserto do Novo México, os americanos acabaram de testar uma arma nova. Na fronteira com a China, mais de um milhão de soldados soviéticos esperam a ordem para atacar."
+    ],
+    "pergunta":"Como a guerra no Pacífico chegou ao fim?",
+    "pastas":[
+      {
+        "cod":"HIR-A · 11 fls.",
+        "rot":"O Japão resiste e negocia a paz, mantendo seu território na Ásia",
+        "tipo":"e",
+        "frase":"É uma falsificação. O império japonês sobrevive à guerra, e continua no controle de boa parte da Ásia."
+      },
+      {
+        "cod":"HIR-B · 17 fls.",
+        "rot":"Sem a bomba, a URSS invade o norte do Japão, que fica dividido em dois",
+        "tipo":"s",
+        "frase":"É uma falsificação. O Japão é partido ao meio, como depois aconteceu com a Coreia."
+      },
+      {
+        "cod":"HIR-C · 30 fls.",
+        "rot":"Os EUA lançam bombas atômicas, e a URSS ataca a Manchúria",
+        "tipo":"h",
+        "frase":"O papel confere. Em poucos dias, o Japão se rende. Começa a era das armas nucleares."
+      }
+    ],
+    "card":{
+      "titulo":"Hiroshima, Nagasaki e a Manchúria",
+      "corpo":"Em 6 de agosto de 1945, os Estados Unidos lançaram uma bomba atômica sobre Hiroshima. Dois dias depois, a URSS declarou guerra ao Japão e invadiu a Manchúria. No dia 9, uma segunda bomba atingiu Nagasaki. Estima-se que, até o fim daquele ano, cerca de 140 mil pessoas morreram em Hiroshima e 74 mil em Nagasaki, a maioria civis. Em 15 de agosto, o imperador Hirohito anunciou a rendição do Japão pelo rádio.",
+      "cur":"Até hoje, historiadores discutem o que realmente fez o Japão desistir da guerra: as duas bombas, ou a entrada da URSS no conflito. Também se discute se usar as bombas era necessário.",
+      "fonte":"Fontes: The National WWII Museum; Museu Memorial da Paz de Hiroshima; Atomic Heritage Foundation."
+    }
+  },
+  {
+    "ato":4,
+    "data":"Junho de 1947 · Washington, EUA",
+    "titulo":"O Plano Marshall",
+    "texto":[
+      "Dois anos depois da guerra, a Europa ainda está em ruínas. O inverno de 1946 para 1947 foi um dos mais duros do século, e falta comida e carvão. Na França e na Itália, os partidos comunistas estão entre os mais votados.",
+      "O governo americano propõe um grande plano de ajuda para reconstruir a Europa. No Congresso, muita gente acha que os EUA já gastaram dinheiro demais com problema dos outros."
+    ],
+    "pergunta":"O que o Congresso americano decidiu?",
+    "pastas":[
+      {
+        "cod":"MAR-A · 24 fls.",
+        "rot":"O Congresso aprova o plano, e a Europa Ocidental se reconstrói",
+        "tipo":"h",
+        "frase":"O papel confere. As fábricas voltam a funcionar, e o comunismo perde força nas urnas."
+      },
+      {
+        "cod":"MAR-B · 13 fls.",
+        "rot":"O Congresso rejeita, e os comunistas vencem as eleições na Itália e na França",
+        "tipo":"s",
+        "frase":"É uma falsificação. Mais dois países grandes entram para o lado de Moscou."
+      },
+      {
+        "cod":"MAR-C · 10 fls.",
+        "rot":"Os EUA só ajudam se a Alemanha se armar de novo, imediatamente",
+        "tipo":"e",
+        "frase":"É uma falsificação. A Europa passa a reconstruir fábricas de armas antes mesmo de reconstruir as casas."
+      }
+    ],
+    "card":{
+      "titulo":"Plano Marshall",
+      "corpo":"O secretário de Estado George Marshall anunciou o plano em 5 de junho de 1947, num discurso em Harvard. Ele foi aprovado em abril de 1948 e distribuiu cerca de 13 bilhões de dólares para países da Europa Ocidental até 1951. A URSS recusou a ajuda, e obrigou os países do Leste Europeu a recusarem também. Em 1948, Moscou bloqueou o acesso a Berlim Ocidental, e os Aliados precisaram abastecer a cidade inteira por avião, durante quase um ano.",
+      "cur":"A Tchecoslováquia chegou a aceitar a ajuda americana, mas recuou depois de pressão da URSS.",
+      "fonte":"Fontes: George C. Marshall Foundation; Office of the Historian, Departamento de Estado dos EUA."
+    }
+  },
+  {
+    "ato":4,
+    "data":"22 de outubro de 1962 · Washington, EUA",
+    "titulo":"Crise dos Mísseis",
+    "chave":"cuba",
+    "texto":[
+      "Fotos tiradas de um avião espião mostram que a URSS está montando bases de mísseis nucleares em Cuba, a só 150 quilômetros da Flórida. De lá, esses mísseis podem atingir boa parte dos Estados Unidos em minutos.",
+      "O presidente Kennedy reúne seus conselheiros. Os generais querem bombardear as bases e invadir a ilha. Outros preferem só cercar Cuba com navios. Enquanto isso, navios soviéticos seguem em direção ao Caribe."
+    ],
+    "pergunta":"O que os Estados Unidos fizeram?",
+    "pastas":[
+      {
+        "cod":"CUB-A · 14 fls.",
+        "rot":"Os EUA recuam e aceitam os mísseis em Cuba",
+        "tipo":"s",
+        "frase":"É uma falsificação. Os aliados dos Estados Unidos no mundo todo passam a duvidar se Washington ainda os protege."
+      },
+      {
+        "cod":"CUB-B · 28 fls.",
+        "rot":"Os EUA cercam Cuba com navios e negociam um acordo",
+        "tipo":"h",
+        "frase":"O papel confere. Depois de treze dias de tensão, os mísseis saem de Cuba. Em segredo, os americanos também tiram os deles da Turquia."
+      },
+      {
+        "cod":"CUB-C · 03 fls.",
+        "rot":"Os EUA bombardeiam as bases e invadem Cuba",
+        "tipo":"e",
+        "marca":"cuba-invasao",
+        "frase":"É uma falsificação. Os bombardeiros já estão abastecidos. No mar, navios americanos cercam um submarino soviético, e ninguém sabe que ele carrega um torpedo nuclear."
+      }
+    ],
+    "card":{
+      "titulo":"Crise dos Mísseis de Cuba",
+      "corpo":"A crise durou treze dias, de 16 a 28 de outubro de 1962. A URSS tinha instalado os mísseis depois de duas coisas: a tentativa americana de invadir Cuba em 1961, e a instalação de mísseis americanos na Turquia. Em 22 de outubro, Kennedy anunciou um bloqueio naval em volta de Cuba. No dia 28, o líder soviético Kruschev aceitou tirar os mísseis, em troca de uma promessa: os EUA não invadiriam Cuba. Em segredo, os EUA também retiraram seus mísseis da Turquia.",
+      "cur":"Depois da crise, Estados Unidos e URSS criaram uma linha telefônica direta entre os dois governos, em 1963: o famoso \"telefone vermelho\".",
+      "fonte":"Fontes: John F. Kennedy Presidential Library; National Security Archive (Universidade George Washington)."
+    }
+  },
+  {
+    "ato":4,
+    "data":"9 de novembro de 1989 · Berlim Oriental",
+    "titulo":"A queda do Muro",
+    "texto":[
+      "Em Moscou, o líder soviético Gorbachev prometeu mais liberdade e reformas, e, no Leste Europeu, as pessoas acreditaram. A Hungria abriu sua fronteira com a Áustria, e milhares de alemães orientais fugiram por ali. Em Leipzig, os protestos crescem a cada semana.",
+      "Nesta noite, um porta-voz do governo anuncia, meio confuso, que as regras de viagem mudaram \"a partir de agora\". Milhares de pessoas correm até os portões do Muro de Berlim. Os guardas não receberam nenhuma ordem sobre o que fazer."
+    ],
+    "pergunta":"O que aconteceu no Muro?",
+    "pastas":[
+      {
+        "cod":"BER-A · 12 fls.",
+        "rot":"Moscou manda tanques, e os protestos são esmagados",
+        "tipo":"s",
+        "frase":"É uma falsificação. O bloco soviético continua de pé, mas ainda mais fechado. O medo volta às ruas."
+      },
+      {
+        "cod":"BER-B · 09 fls.",
+        "rot":"Nasce uma Alemanha neutra e armada, entre os dois lados",
+        "tipo":"e",
+        "frase":"É uma falsificação. No meio da Europa, surge um país poderoso que não responde a ninguém."
+      },
+      {
+        "cod":"BER-C · 33 fls.",
+        "rot":"Os guardas abrem os portões, e o Muro cai",
+        "tipo":"h",
+        "frase":"O papel confere. Em menos de um ano, a Alemanha se reúne de novo. Em dois anos, a URSS deixa de existir."
+      }
+    ],
+    "card":{
+      "titulo":"A queda do Muro de Berlim",
+      "corpo":"Na noite de 9 de novembro de 1989, o porta-voz Günter Schabowski anunciou por engano que a nova lei de viagens já valia naquele momento. Multidões correram para os portões do Muro, e os guardas, sem receber ordens claras, acabaram abrindo as passagens. A Alemanha se reuniu oficialmente em 3 de outubro de 1990. Em dezembro de 1991, a URSS se dividiu em 15 países independentes. Ali terminou a Guerra Fria.",
+      "cur":"No mesmo ano, em junho de 1989, o governo da China usou tanques para esmagar protestos na Praça da Paz Celestial, em Pequim. Usar a força também era uma opção sobre a mesa em Berlim. Só que, dessa vez, não foi escolhida.",
+      "fonte":"Fontes: Stiftung Berliner Mauer (Fundação do Muro de Berlim); Encyclopaedia Britannica."
+    }
+  }
 ];
 
-/* A pasta de "invadir Cuba" só revela o fio que leva ao Final D quando o acervo
-   já está quase empatado entre o Eixo e a URSS ao chegar nesta decisão — do
-   contrário, a mesma escolha aparece como mais uma falsificação comum do Eixo,
+/* A pasta de "invadir Cuba" so revela o gancho do submarino quando o acervo
+   ja esta quase empatado entre o Eixo e a URSS ao chegar nesta decisao - do
+   contrario, a mesma escolha aparece como mais uma falsificacao comum do Eixo,
    sem o gancho do submarino. A troca em tempo real acontece no shell3.html. */
 var CUBA_OCULTA = DECISOES[13].pastas[2];
 var CUBA_PADRAO = {
   cod:"CUB-C · 03 fls.",
   rot:"Os EUA bombardeiam as bases e invadem Cuba",
   tipo:"e",
-  frase:"A falsificação entra no acervo. A invasão vira uma guerra maior, e o Caribe pega fogo pelos dez anos seguintes."
+  frase:"É uma falsificacao. A invasao vira uma guerra maior, e o Caribe pega fogo pelos dez anos seguintes."
 };
 
 </script>
@@ -867,6 +1267,36 @@ var som={
 };
 
 function $(i){return document.getElementById(i);}
+
+/* Ficha técnica. Para acrescentar um setor novo (trilha sonora, narração,
+   ilustração etc.), basta adicionar um objeto {funcao, nome, detalhe?} aqui —
+   a lista na tela se atualiza sozinha. */
+var CREDITOS = [
+  {funcao:"Direção de arte & game design", nome:"Ismael Oliveira"},
+  {funcao:"Roteiro & pesquisa histórica", nome:"Ismael Oliveira"},
+  {funcao:"Desenvolvimento", nome:"Ismael Oliveira"},
+  {funcao:"Consultoria histórica & revisão de conteúdo", nome:"Prof. Dr. Sérgio Romualdo Lima Brandim",
+   detalhe:"Graduado em História · Mestre em História do Brasil · Doutor em Ensino de História · Produção em livro didático e na área de ensino de história"}
+];
+var creditosMontados=false;
+function montaCreditos(){
+  if(creditosMontados)return; creditosMontados=true;
+  $("credLista").innerHTML = CREDITOS.map(function(c){
+    return '<div class="credItem"><span class="rot">'+c.funcao+'</span><b>'+c.nome+'</b>'+
+      (c.detalhe?'<p class="meta">'+c.detalhe+'</p>':'')+'</div>';
+  }).join("");
+}
+var credVoltaPara=null;
+function abreCreditos(origem){
+  montaCreditos();
+  credVoltaPara=origem;
+  $("creditos").classList.add("on");
+  setTimeout(function(){$("btCredFechar").focus();},80);
+}
+function fechaCreditos(){
+  $("creditos").classList.remove("on");
+  if(credVoltaPara)credVoltaPara.focus();
+}
 
 /* ===== NARRAÇÃO =====
    Hoje usa a voz sintética do navegador. Quando os áudios gravados chegarem,
@@ -1126,20 +1556,20 @@ window.addEventListener("resize",function(){clearTimeout(tm_);tm_=setTimeout(fun
 
 /* ===== CONQUISTAS E INSÍGNIAS ===== */
 var CONQ=[
- {id:"selo",      nome:"O Primeiro Selo",        desc:"Você validou seu primeiro documento autêntico. O acervo começou a ser reconstruído.", metal:"latao",  forma:"circ",   glifo:"selo"},
- {id:"munique",   nome:"Contra o Apaziguamento", desc:"Reconheceu o que de fato saiu de Munique em 1938, a decisão que a Europa levou anos para entender.", metal:"bronze", forma:"escudo", glifo:"guarda"},
- {id:"olho",      nome:"Olho Treinado",          desc:"Três documentos autênticos seguidos. Você está lendo os sinais da falsificação.", metal:"latao",  forma:"circ",   glifo:"olho"},
- {id:"cinco",     nome:"Cinco Selos",            desc:"Cinco documentos autênticos no acervo. A reconstrução deixou de ser sorte.", metal:"bronze", forma:"circ",   glifo:"cinco"},
- {id:"travessia", nome:"A Travessia",            desc:"Você atravessou os cinco atos, de Munique em 1938 até a queda do Muro em 1989.", metal:"bronze", forma:"escudo", glifo:"rota"},
- {id:"ato",       nome:"Ato Impecável",          desc:"Um ato inteiro sem deixar passar uma única falsificação.", metal:"prata",  forma:"estrela",glifo:"estrela"},
- {id:"codigo",    nome:"Leitor de Códigos",      desc:"Acertou Midway, a batalha que foi decidida por criptógrafos antes de ser decidida no mar.", metal:"bronze", forma:"circ",   glifo:"morse"},
- {id:"reencontro",nome:"Reencontro",             desc:"Deixou uma falsificação passar e depois emendou três autênticos. A história pode ser retomada.", metal:"bronze", forma:"escudo", glifo:"setas"},
- {id:"mao",       nome:"Mão Firme",              desc:"Seis documentos autênticos seguidos, sem hesitar.", metal:"prata",  forma:"circ",   glifo:"barras"},
+ {id:"selo",      nome:"O Primeiro Selo",        desc:"Você validou seu primeiro documento de verdade. O acervo começou a ser consertado.", metal:"latao",  forma:"circ",   glifo:"selo"},
+ {id:"munique",   nome:"Contra o Apaziguamento", desc:"Você acertou o que realmente aconteceu em Munique, em 1938: a decisão que a Europa levou anos para entender que tinha sido um erro.", metal:"bronze", forma:"escudo", glifo:"guarda"},
+ {id:"olho",      nome:"Olho Treinado",          desc:"Três documentos verdadeiros seguidos. Você já sabe reconhecer os sinais de uma falsificação.", metal:"latao",  forma:"circ",   glifo:"olho"},
+ {id:"cinco",     nome:"Cinco Selos",            desc:"Cinco documentos verdadeiros no total. Agora já não é mais sorte.", metal:"bronze", forma:"circ",   glifo:"cinco"},
+ {id:"travessia", nome:"A Travessia",            desc:"Você passou pelos cinco atos, de Munique em 1938 até a queda do Muro em 1989.", metal:"bronze", forma:"escudo", glifo:"rota"},
+ {id:"ato",       nome:"Ato Impecável",          desc:"Um ato inteiro sem deixar passar nenhuma falsificação.", metal:"prata",  forma:"estrela",glifo:"estrela"},
+ {id:"codigo",    nome:"Leitor de Códigos",      desc:"Você acertou Midway, a batalha que foi decidida por gente que decifrava códigos secretos, antes mesmo do combate no mar.", metal:"bronze", forma:"circ",   glifo:"morse"},
+ {id:"reencontro",nome:"Reencontro",             desc:"Você deixou uma falsificação passar, mas depois acertou três seguidas. A história ainda pode ser salva.", metal:"bronze", forma:"escudo", glifo:"setas"},
+ {id:"mao",       nome:"Mão Firme",              desc:"Seis documentos verdadeiros seguidos, sem errar nenhum.", metal:"prata",  forma:"circ",   glifo:"barras"},
  {id:"metade",    nome:"Metade Salva",           desc:"Mais da metade do acervo do século está correta.", metal:"prata",  forma:"circ",   glifo:"meio"},
- {id:"dois",      nome:"Dois Atos Limpos",       desc:"Dois atos inteiros sem nenhuma falsificação validada.", metal:"ouro",   forma:"estrela",glifo:"duasestrelas"},
- {id:"cuba",      nome:"Perto Demais",           desc:"Você abriu a pasta da invasão de Cuba. Em outubro de 1962, foi por muito pouco.", metal:"ferro",  forma:"escudo", glifo:"sonar"},
- {id:"frio",      nome:"O Fim da Guerra Fria",   desc:"Os três documentos do Ato V, de 1947 a 1989, validados corretamente.", metal:"ouro",   forma:"circ",   glifo:"muro"},
- {id:"mestre",    nome:"Arquivista-Mestre",      desc:"Quinze de quinze. Não restou uma única falsificação no acervo do século XX.", metal:"ouro",   forma:"estrela",glifo:"chave"}
+ {id:"dois",      nome:"Dois Atos Limpos",       desc:"Dois atos inteiros sem deixar passar nenhuma falsificação.", metal:"ouro",   forma:"estrela",glifo:"duasestrelas"},
+ {id:"cuba",      nome:"Perto Demais",           desc:"Você abriu a pasta da invasão de Cuba. Em outubro de 1962, foi por muito pouco que o mundo não acabou de verdade.", metal:"ferro",  forma:"escudo", glifo:"sonar"},
+ {id:"frio",      nome:"O Fim da Guerra Fria",   desc:"Os três documentos do Ato V, de 1947 a 1989, todos certos.", metal:"ouro",   forma:"circ",   glifo:"muro"},
+ {id:"mestre",    nome:"Arquivista-Mestre",      desc:"Quinze de quinze. Não sobrou nenhuma falsificação no acervo do século XX.", metal:"ouro",   forma:"estrela",glifo:"chave"}
 ];
 function conqPorId(id){for(var i=0;i<CONQ.length;i++)if(CONQ[i].id===id)return CONQ[i];return null;}
 
@@ -1396,7 +1826,7 @@ function montaCard(){
   else{var cor=p.tipo==="e"?"var(--le)":"var(--ls)";
     $("cMudou").innerHTML='<div style="background:rgba(39,32,21,.85);border-radius:10px;padding:14px;margin-top:16px;border-left:3px solid '+cor+'">'+
       '<span class="rot" style="display:block;margin-bottom:8px">O que a falsificação propunha</span>'+
-      '<p class="cena" style="margin:0;font-size:16.5px">'+p.rot+'. Esta versão nunca aconteceu — mas se apoia em algo que foi de fato discutido na época, e é por isso que ela convence.</p></div>';}
+      '<p class="cena" style="margin:0;font-size:16.5px">'+p.rot+'. Essa versão nunca aconteceu, mas se apoia em algo que foi de fato discutido na época, e é por isso que ela convence.</p></div>';}
   var ultimo=S.i===DECISOES.length-1, fimAto=ultimo||DECISOES[S.i+1].ato!==d.ato;
   $("btCard").textContent=ultimo?"Fechar o acervo":(fimAto?"Encerrar o Ato "+ATOS[d.ato].n:"Próxima pasta");
   som.pag();folha("fCard");
@@ -1429,24 +1859,24 @@ function montaFinal(){
     conquista("ato");if(lp>=2)conquista("dois");}
   if(ac_===DECISOES.length){conquista("mestre");
     f={fx:"ACERVO RESTAURADO",c:"var(--lh)",t:"O Mundo que Conhecemos",
-      a:"Não restou uma única falsificação. A guerra termina em 1945, a ONU nasce, a Guerra Fria se encerra com a queda do Muro em 1989 e a URSS deixa de existir em 1991. O século que você entrega é o século que de fato existiu.",
-      b:"Este é o único final em que o Arquivista vence. Ele não era inevitável: foi construído documento por documento.",
+      a:"Você não deixou passar nenhuma falsificação. A guerra termina em 1945, a ONU nasce, a Guerra Fria acaba com a queda do Muro em 1989, e a URSS deixa de existir em 1991. Esse é o mundo real, o mesmo em que vivemos hoje.",
+      b:"Esse é o único final em que o Arquivista vence de verdade. E ele não aconteceu por acaso: foi construído aos poucos, documento por documento, por você.",
       n:"Final A, de quatro. É o único que não é uma derrota.",s:"vit"};
   } else if(cuba&&ac_<=9&&divergeNormalizada()<=0.14){
     f={fx:"ACERVO PERDIDO",c:"var(--ld)",t:"O Último Outubro",
-      a:"Nenhuma das duas falsificações venceu: o acervo desmoronou dos dois lados ao mesmo tempo, e a pasta de outubro de 1962 selou o resto. No Caribe, um submarino soviético cercado prepara um torpedo nuclear, e dessa vez não há um terceiro oficial para dizer não.",
-      b:"Na história real, Vasili Arkhipov recusou o disparo e a crise terminou no dia 28. Em 1963 nasceram a linha direta entre Washington e Moscou e o tratado que proibiu testes nucleares na atmosfera. Às vezes o mundo inteiro depende de uma única pessoa dizendo não.",
+      a:"Nenhuma das duas falsificações venceu sozinha: o acervo desmoronou dos dois lados ao mesmo tempo, e a última pasta que você abriu foi a da invasão de Cuba. No Caribe, um submarino soviético cercado prepara um torpedo nuclear. Dessa vez, não existe ninguém para impedir o disparo.",
+      b:"Na vida real, um oficial chamado Vasili Arkhipov se recusou a autorizar o disparo. A crise terminou dois dias depois, sem guerra. Em 1963, nasceram a linha telefônica direta entre Washington e Moscou, e um tratado proibindo testes nucleares no ar. Às vezes, o mundo inteiro depende de uma única pessoa dizer não.",
       n:"Final D, o secreto. Ele só aparece quando o acervo desmorona dos dois lados ao mesmo tempo e a última pasta aberta é a invasão de Cuba.",s:"der"};
   } else if(eLidera()){
     f={fx:"ACERVO FALSIFICADO",c:"var(--le)",t:"A Longa Noite",
-      a:"As falsificações do Eixo venceram. No acervo que você entrega, a Alemanha domina a Europa do Atlântico aos Urais e o Japão governa o Leste da Ásia. Não há tribunal de Nuremberg, não há libertação dos campos.",
-      b:"Nada disso foi uma escolha sua. Você não optou por esse mundo: você deixou de reconhecer os documentos verdadeiros, e o acervo passou a contar a história de quem o adulterou.",
-      n:"Final B, uma derrota. Na história real o regime nazista foi derrotado em 1945, e cerca de 6 milhões de judeus foram assassinados no Holocausto. Fonte: United States Holocaust Memorial Museum.",s:"der"};
+      a:"As falsificações do Eixo venceram. Nesse mundo, a Alemanha controla a Europa inteira, do Atlântico aos montes Urais, e o Japão domina o Leste da Ásia. Não existe um julgamento para os crimes de guerra. Os campos de concentração nunca são libertados.",
+      b:"Nada disso foi uma escolha sua. Você não quis esse mundo. Só deixou de perceber quais documentos eram falsos, e por isso essa versão da história tomou o lugar da verdadeira.",
+      n:"Final B, uma derrota. Na vida real, o nazismo foi derrotado em 1945. Cerca de 6 milhões de judeus foram assassinados no Holocausto. Fonte: United States Holocaust Memorial Museum.",s:"der"};
   } else {
     f={fx:"ACERVO FALSIFICADO",c:"var(--ls)",t:"O Século Vermelho",
-      a:"As falsificações soviéticas venceram. No acervo que você entrega, a URSS chega ao Atlântico, a Europa inteira fica sob sua influência e os EUA se fecham no isolacionismo. Há escola e saúde para todos, e há presos políticos em campos de trabalho.",
-      b:"Nada disso foi uma escolha sua. Você não optou por esse mundo: você deixou de reconhecer os documentos verdadeiros, e o acervo passou a contar a história de quem o adulterou.",
-      n:"Final C, uma derrota. Na história real a URSS se dissolveu em 1991, e o sistema de campos de trabalho forçado aprisionou milhões de pessoas entre os anos 1930 e 1950. Fonte: Encyclopaedia Britannica.",s:"der"};
+      a:"As falsificações soviéticas venceram. Nesse mundo, a URSS controla a Europa inteira e tem forte influência sobre o Japão. Os Estados Unidos se isolam do resto do mundo. Existe escola e hospital público para todo mundo, mas quem discorda do governo pode ser preso.",
+      b:"Nada disso foi uma escolha sua. Você não quis esse mundo. Só deixou de perceber quais documentos eram falsos, e por isso essa versão da história tomou o lugar da verdadeira.",
+      n:"Final C, uma derrota. Na vida real, a URSS deixou de existir em 1991. Entre os anos 1930 e 1950, o sistema soviético de campos de trabalhos forçados prendeu milhões de pessoas. Fonte: Encyclopaedia Britannica.",s:"der"};
   }
   var id = ac_===DECISOES.length?"A":(f.t==="O Último Outubro"?"D":(f.t==="A Longa Noite"?"B":"C"));
   B.dataset.final=id;
@@ -1520,6 +1950,9 @@ function avanca(){
   S.i++;montaBrief();
 }
 $("btComecar").addEventListener("click",function(){ac();iniAmb();som.pag();zera();montaBrief();tocaTrilha();});
+$("btCreditos1").addEventListener("click",function(){abreCreditos(this);});
+$("btCreditos2").addEventListener("click",function(){abreCreditos(this);});
+$("btCredFechar").addEventListener("click",fechaCreditos);
 $("btVerMesa").addEventListener("click",vaiMesa);
 $("btVoltar").addEventListener("click",function(){deseleciona();som.papel();});
 $("btEscolher").addEventListener("click",confirma);
@@ -1558,6 +1991,7 @@ $("btSom").addEventListener("click",function(){somOn=!somOn;
   } else {paraAmb();paraTrilha(400);paraMusFinal();}
   try{localStorage.setItem("pr-som",somOn?"1":"0");}catch(e){}});
 document.addEventListener("keydown",function(e){
+  if(e.key==="Escape"&&$("creditos").classList.contains("on")){fechaCreditos();return;}
   if(B.dataset.fase!=="mesa")return;
   if(e.key==="Escape"&&sel!==null){deseleciona();return;}
   if(e.key==="Enter"&&sel!==null){confirma();return;}
@@ -1572,12 +2006,14 @@ foto("key","saturate(1.02)");
    exame e a de insígnias continuam alcançáveis de propósito: comparar outro
    arquivo ou outra insígnia por trás delas é parte do jogo. ===== */
 (function(){
-  var elVeu=$("veu"), elPalco=$("palco"), elFerr=$("ferr"), elPerg=$("pergunta");
+  var elVeu=$("veu"), elCred=$("creditos"), elPalco=$("palco"), elFerr=$("ferr"), elPerg=$("pergunta");
   if(!("inert" in document.body))return; // navegador sem suporte: segue sem o reforço, nada quebra
-  new MutationObserver(function(){
-    var aberto=elVeu.classList.contains("on");
+  function trancaFundo(){
+    var aberto=elVeu.classList.contains("on")||elCred.classList.contains("on");
     elPalco.inert=aberto; elPerg.inert=aberto;
-  }).observe(elVeu,{attributes:true,attributeFilter:["class"]});
+  }
+  new MutationObserver(trancaFundo).observe(elVeu,{attributes:true,attributeFilter:["class"]});
+  new MutationObserver(trancaFundo).observe(elCred,{attributes:true,attributeFilter:["class"]});
   new MutationObserver(function(){
     elFerr.inert = (B.dataset.inspec==="1"||B.dataset.lendo==="1");
   }).observe(B,{attributes:true,attributeFilter:["data-inspec","data-lendo"]});
